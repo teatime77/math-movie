@@ -29,5 +29,16 @@ export function render(ele: HTMLElement, tex_text: string){
     }
 }
 
+export function addHR(){
+    const hr = document.createElement("hr");
+    document.body.appendChild(hr);
+}
+
+export function scrollToBottom(){
+    var element = document.documentElement;
+    var bottom = element.scrollHeight - element.clientHeight;
+    window.scroll(0, bottom);    
+}
+
 }
 

@@ -94,10 +94,6 @@ var KeywordMap : Array<string> = new  Array<string> (
 
 var IdList : Array<string> = new  Array<string> (
 );
-    
-function isWhiteSpace(c:string) : boolean {
-    return c == ' ' || c == '\t' || c == '\r' || c == '\n';
-}
 
 function isLetter(s : string) : boolean {
     return s.length === 1 && ("a" <= s && s <= "z" || "A" <= s && s <= "Z");
@@ -142,7 +138,7 @@ export function lexicalAnalysis(text : string) : Token[] {
     while(pos < text.length){
         
         // 改行以外の空白をスキップします。
-        for ( ; pos < text.length && text[pos] != '\r' && text[pos] != '\n' && isWhiteSpace(text[pos]); pos++);
+        for ( ; pos < text.length && (text[pos] == ' ' || text[pos] == '\t' || text[pos] == '\r'); pos++);
 
         if (text.length <= pos) {
             // テキストの終わりの場合
@@ -172,7 +168,12 @@ export function lexicalAnalysis(text : string) : Token[] {
             ch2 = '\0';
         }
 
-        if(ch1 == '\\'){
+        if(ch1 == '\n'){
+
+            token_type = TokenType.newLine;
+            pos++;
+        }
+        else if(ch1 == '\\'){
             if(isLetter(ch2)){
 
                 // 識別子の文字の最後を探す。
@@ -327,6 +328,38 @@ export class Parser {
         return blc;
     }
 
+    readMacro(text: string) : TexMacro {
+        const mac = new TexMacro(text);
+
+        while(this.isArgs()){
+            const blc = this.readBlock();
+    
+            mac.args.push(blc);    
+        }
+
+        return mac;
+    }
+
+    readEnv(text: string) : TexEnv {
+
+        const env = new TexEnv();
+
+        env.begin = this.readMacro(text);
+
+        while(true){
+            const node = this.parse();
+            if(node.text == "\\end"){
+
+                env.end = node as TexMacro;
+                break;
+            }
+
+            env.children.push(node);
+        }
+
+        return env;
+    }
+
     appended(){
         if(this.tokenPos == 0){
             return false;
@@ -358,12 +391,11 @@ export class Parser {
             this.readNextToken();
 
             if(this.isArgs()){
-                node = new TexMacro(text);
-
-                while(this.isArgs()){
-                    const blc = this.readBlock();
-            
-                    (node as TexMacro).args.push(blc);    
+                if(text == "\\begin"){
+                    node = this.readEnv(text);
+                }
+                else{
+                    node = this.readMacro(text);
                 }
             }
             else{
@@ -397,6 +429,7 @@ export function closingParenthesis(text : string) : string {
     case '{': return '}';
     case '[': return ']';
     case '(': return ')';
+    case '' : return '';
     }
     return '';
 }

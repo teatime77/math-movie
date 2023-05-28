@@ -58,9 +58,42 @@ function* generator(src_text: string){
                 msg(tex_lines);
                 msg("-----------");
 
+                const tokens = lexicalAnalysis(tex_lines);
+
+                const parser = new Parser(tokens);
+
+                const root = new TexBlock('');
+                while(! parser.isEoT()){
+                    const node = parser.parse();
+                    root.children.push(node);
+                }
+
+                const nodes_str = root.texString();
+
+                msg("----------- nodes str");
+                msg(nodes_str);
+                msg("-----------");
+
                 const div1 = document.createElement("div");
                 document.body.appendChild(div1);
-                render(div1, tex_lines);        
+                render(div1, nodes_str);
+                scrollToBottom();
+                yield;
+
+                addHR();
+                yield;
+
+                const div2 = document.createElement("div");
+                document.body.appendChild(div2);
+                for(const s of root.genTex()){
+                    render(div2, s);
+                    scrollToBottom();
+                    yield;
+                }
+
+                addHR();
+                yield;
+
             }
             tex_lines = "";
             yield;
@@ -73,25 +106,15 @@ function* generator(src_text: string){
             continue;
         }
 
-        if(line == ""){
+        tex_lines += line;
 
-            yield;
-            continue;
-        }
+        // if(line == ""){
 
-        const tokens = lexicalAnalysis(line);
+        //     yield;
+        //     continue;
+        // }
 
-        const parser = new Parser(tokens);
-
-        const nodes : TexNode[] = [];
-        while(! parser.isEoT()){
-            const node = parser.parse();
-            nodes.push(node);
-        }
-
-        const nodes_str = nodes.map(x => x.texString()).join(' ');
-
-        tex_lines += `${nodes_str} \n`;
+        // tex_lines += `${nodes_str} \n`;
     }
 }
 
