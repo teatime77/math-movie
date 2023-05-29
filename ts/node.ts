@@ -10,6 +10,16 @@ export abstract class TexNode {
         this.text = text;
     }
 
+    cloneSubSub(node: TexNode){
+        if(node.sub != null){
+            this.sub = node.sub.clone();
+        }
+
+        if(node.sup != null){
+            this.sup = node.sup.clone();
+        }
+    }
+
     addSubSup(text: string){
         if(this.sub != null){
             text += `_${this.sub.texString()}`;
@@ -41,7 +51,7 @@ export abstract class TexNode {
         yield texts.join("");
     }
 
-    // abstract initString() : string;
+    abstract clone() : TexNode;
     abstract texString() : string;
     abstract listTex() : string[];
     abstract genTexSub() : IterableIterator<string>;
@@ -73,6 +83,16 @@ export class TexBlock extends TexNode {
     public constructor(text : string){
         super(text);
         this.closing_parenthesis = closingParenthesis(this.text);
+    }
+
+    clone() : TexBlock {
+        const node = new TexBlock(this.text);
+
+        node.cloneSubSub(this);
+        node.children = this.children.map(x => x.clone());
+        node.closing_parenthesis = this.closing_parenthesis;
+
+        return node;
     }
 
     initString() : string {
@@ -117,6 +137,15 @@ export class TexMacro extends TexNode {
         super(text);
     }
 
+    clone() : TexMacro {
+        const node = new TexMacro(this.text);
+
+        node.cloneSubSub(this);
+        node.args = this.args.map(x => x.clone());
+
+        return node;
+    }
+
     texString() : string {
         let str = this.text;
 
@@ -151,6 +180,14 @@ export class TexLeaf extends TexNode {
         super(text);
     }
 
+    clone() : TexLeaf {
+        const node = new TexLeaf(this.text);
+
+        node.cloneSubSub(this);
+
+        return node;
+    }
+
     texString() : string {
         return this.addSubSup(this.text);
     }
@@ -171,6 +208,17 @@ export class TexEnv extends TexNode {
 
     public constructor(){
         super("");
+    }
+
+    clone() : TexEnv {
+        const node = new TexEnv();
+
+        node.cloneSubSub(this);
+        node.begin = this.begin.clone();
+        node.children = this.children.map(x => x.clone());
+        node.end   = this.end.clone();
+
+        return node;
     }
 
     texString() : string{
@@ -201,15 +249,7 @@ export class TexEnv extends TexNode {
         
         yield `${begin_str}\n ${children_str.join(" ")} \n${end_str}`;
     }
-
 }
-
-
-
-
-
-
-
 
 
 }

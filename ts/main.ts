@@ -83,9 +83,10 @@ function* generator(src_text: string){
                 addHR();
                 yield;
 
+                const root2 = root.clone();
                 const div2 = document.createElement("div");
                 document.body.appendChild(div2);
-                for(const s of root.genTex()){
+                for(const s of root2.genTex()){
                     render(div2, s);
                     scrollToBottom();
                     yield;
@@ -107,14 +108,6 @@ function* generator(src_text: string){
         }
 
         tex_lines += line;
-
-        // if(line == ""){
-
-        //     yield;
-        //     continue;
-        // }
-
-        // tex_lines += `${nodes_str} \n`;
     }
 }
 
