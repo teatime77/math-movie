@@ -4,22 +4,36 @@ function* rep(tex_nodes : TexBlock[], args : TexNode[]){
     const arg1 = args[0];
     const arg2 = args[1];
 
-    const node = tex_nodes[tex_nodes.length - 1].clone();
-    tex_nodes.push(node);
+    const root = tex_nodes[tex_nodes.length - 1].clone();
+    tex_nodes.push(root);
 
-    const nodes : TexNode[] = [];
-    allNodes(node, nodes);
+    const nodes = allNodes(root);
     
     const eq_nodes = nodes.filter(x => x.equals(arg1));
 
-    eq_nodes.forEach(x => replace(x, arg2.clone()));
-
     const div = document.createElement("div");
     document.body.appendChild(div);
-    for(const s of node.genTex()){
-        render(div, s);
-        scrollToBottom();
-        yield;
+
+    for(const nd of eq_nodes){
+        const target = arg2.clone();
+        replace(nd, target);
+
+        genPart = new PartialTex(target);
+        while(true){
+            allNodes(root).forEach(x => x.entireText = null);
+            var str = root.texString();
+            msg(str);
+            render(div, str);
+            scrollToBottom();
+
+            if(genPart.done()){
+                break;
+            }
+            yield;
+        }
+
+        genPart = null;
+        targetNode = null;
     }
 
     addHR();

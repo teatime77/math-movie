@@ -60,7 +60,6 @@ export abstract class TexNode {
 
     abstract clone() : TexNode;
     abstract texString() : string;
-    abstract listTex() : string[];
     abstract genTexSub() : IterableIterator<string>;
 
     * genTex() : IterableIterator<string>{
@@ -77,11 +76,32 @@ export abstract class TexNode {
     }
 }
 
+export let targetNode : TexNode = null;
 
-export var targetNode : TexNode = null;
-export var genNode = null;
-export var genNext;
-var genValue;
+export class PartialTex {
+    genNode : IterableIterator<string> = null;
+    genNext : IteratorResult<string> = null;
+    genValue : string = null;
+
+    constructor(nd : TexNode){
+        targetNode = nd;
+        this.genNode = nd.genTex();
+    }
+
+    partTex() : string {
+        this.genNext = this.genNode.next();
+        if(! this.genNext.done){
+            this.genValue = this.genNext.value;
+        }
+        return `\\textcolor{red}{${this.genValue}}`;
+    }
+
+    done() : boolean {
+        return this.genNext == null || this.genNext.done
+    }
+}
+
+export let genPart : PartialTex;
 
 export class TexBlock extends TexNode {
     children : TexNode[] = [];
@@ -109,6 +129,11 @@ export class TexBlock extends TexNode {
     }
 
     texString() : string {
+        if(this == targetNode){
+
+            return genPart.partTex();
+        }
+
         if(this.entireText == null){
 
             const str = this.children.map(x => x.texString()).join(' ');
@@ -116,18 +141,6 @@ export class TexBlock extends TexNode {
         }
 
         return this.entireText;
-    }
-
-    listTex() : string[] {
-        if(this == targetNode){
-            genNext = genNode.next();
-            if(! genNext.done){
-                genValue = genNext.value;
-            }
-            return ["\\textcolor{red}{"].concat(genValue, ["}"]);
-        }
-        var v = this.children.map(x => x.listTex());
-        return v.flat();
     }
 
     *genTexSub() : IterableIterator<string> {
@@ -171,6 +184,11 @@ export class TexMacro extends TexText {
     }
 
     texString() : string {
+        if(this == targetNode){
+
+            return genPart.partTex();
+        }
+
         if(this.entireText == null){
 
             let str = this.text;
@@ -183,10 +201,6 @@ export class TexMacro extends TexText {
         }
 
         return this.entireText;
-    }
-
-    listTex() : string[] {
-        return [ this.text ];
     }
 
     *genTexSub() : IterableIterator<string> {
@@ -218,16 +232,17 @@ export class TexLeaf extends TexText {
     }
 
     texString() : string {
+        if(this == targetNode){
+
+            return genPart.partTex();
+        }
+
         if(this.entireText == null){
 
             this.entireText = this.addSubSup(this.text);
         }
 
         return this.entireText;
-    }
-
-    listTex() : string[] {
-        return [ this.text ];
     }
 
     *genTexSub() : IterableIterator<string> {
@@ -252,6 +267,11 @@ export class TexEnv extends TexNode {
     }
 
     texString() : string{
+        if(this == targetNode){
+
+            return genPart.partTex();
+        }
+
         if(this.entireText == null){
 
             const begin_str = this.begin.texString();
@@ -262,10 +282,6 @@ export class TexEnv extends TexNode {
         }
 
         return this.entireText;
-    }
-
-    listTex() : string[]{
-        return [];
     }
 
     *genTexSub() : IterableIterator<string> {
@@ -286,7 +302,7 @@ export class TexEnv extends TexNode {
     }
 }
 
-export function allNodes(node : TexNode, nodes : TexNode[]){
+export function allNodes(node : TexNode, nodes : TexNode[] = []) : TexNode[] {
     nodes.push(node);
 
     if(node.sub != null){
@@ -319,6 +335,8 @@ export function allNodes(node : TexNode, nodes : TexNode[]){
             allNodes(nd, nodes);
         }
     }
+
+    return nodes;
 }
 
 export function replace(node : TexNode, target : TexNode){

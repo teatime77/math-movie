@@ -70,21 +70,6 @@ function* generator(src_text: string){
                 }
 
                 tex_nodes.push(root);
-
-                const nodes_str = root.texString();
-
-                msg("----------- nodes str");
-                msg(nodes_str);
-                msg("-----------");
-
-                const div1 = document.createElement("div");
-                document.body.appendChild(div1);
-                render(div1, nodes_str);
-                scrollToBottom();
-                yield;
-
-                addHR();
-                yield;
                 
                 const root2 = root.clone();
                 const div2 = document.createElement("div");
