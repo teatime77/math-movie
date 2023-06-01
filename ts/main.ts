@@ -43,6 +43,7 @@ function timerFnc(){
 function* generator(src_text: string){
     const lines = src_text.split('\n');
 
+    const tex_nodes : TexBlock[] = [];
     let in_tex = false;
     let tex_lines = "";
     for (let line of lines) {
@@ -68,6 +69,8 @@ function* generator(src_text: string){
                     root.children.push(node);
                 }
 
+                tex_nodes.push(root);
+
                 const nodes_str = root.texString();
 
                 msg("----------- nodes str");
@@ -82,7 +85,7 @@ function* generator(src_text: string){
 
                 addHR();
                 yield;
-
+                
                 const root2 = root.clone();
                 const div2 = document.createElement("div");
                 document.body.appendChild(div2);
@@ -102,6 +105,9 @@ function* generator(src_text: string){
         }
 
         if(! in_tex){
+            if(line.startsWith("rep")){
+                yield* parseCommand(tex_nodes, line);
+            }
             msg(`text ${line}`);
             yield;
             continue;

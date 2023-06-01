@@ -2,12 +2,19 @@ namespace MathMovie {
 const oprTex = { "*":"\\cdot", "=":"=" , "!=":"\\neq" , "<":"\\lt", "<=":"\\leqq", ">":"\\gt" , ">=":"\\geqq" };
 
 export abstract class TexNode {
-    text : string;
+    parent : TexNode = null;
     sub : TexNode = null;
     sup : TexNode = null;
+    entireText : string = null;
 
-    public constructor(text : string){
-        this.text = text;
+    equals(node: TexNode) : boolean {
+        return this.texString() == node.texString();
+    }
+
+    invalidate(){
+        for(let nd : TexNode = this; nd != null; nd = nd.parent){
+            nd.entireText = null;
+        }
     }
 
     cloneSubSub(node: TexNode){
@@ -78,15 +85,17 @@ var genValue;
 
 export class TexBlock extends TexNode {
     children : TexNode[] = [];
+    opening_parenthesis : string;
     closing_parenthesis : string;
 
     public constructor(text : string){
-        super(text);
-        this.closing_parenthesis = closingParenthesis(this.text);
+        super();
+        this.opening_parenthesis = text;
+        this.closing_parenthesis = closingParenthesis(this.opening_parenthesis);
     }
 
     clone() : TexBlock {
-        const node = new TexBlock(this.text);
+        const node = new TexBlock(this.opening_parenthesis);
 
         node.cloneSubSub(this);
         node.children = this.children.map(x => x.clone());
@@ -96,13 +105,17 @@ export class TexBlock extends TexNode {
     }
 
     initString() : string {
-        return `${this.text}${this.closing_parenthesis}`;
+        return `${this.opening_parenthesis}${this.closing_parenthesis}`;
     }
 
     texString() : string {
+        if(this.entireText == null){
 
-        const str = this.children.map(x => x.texString()).join(' ');
-        return this.addSubSup( `${this.text}${str}${this.closing_parenthesis}` );
+            const str = this.children.map(x => x.texString()).join(' ');
+            this.entireText = this.addSubSup( `${this.opening_parenthesis}${str}${this.closing_parenthesis}` );
+        }
+
+        return this.entireText;
     }
 
     listTex() : string[] {
@@ -124,13 +137,24 @@ export class TexBlock extends TexNode {
             for(const seq of this.children[i].genTex()){
                 arg_strs[i] = seq;
     
-                yield `${this.text} ${arg_strs.join(" ")} ${this.closing_parenthesis}`;
+                yield `${this.opening_parenthesis} ${arg_strs.join(" ")} ${this.closing_parenthesis}`;
             }       
         }
+
+        yield `${this.opening_parenthesis} ${arg_strs.join(" ")} ${this.closing_parenthesis}`;
     }
 }
 
-export class TexMacro extends TexNode {
+export abstract class TexText extends TexNode {
+    text : string;
+
+    public constructor(text : string){
+        super();
+        this.text = text;
+    }
+}
+
+export class TexMacro extends TexText {
     args : TexBlock[] = [];
 
     public constructor(text : string){
@@ -147,13 +171,18 @@ export class TexMacro extends TexNode {
     }
 
     texString() : string {
-        let str = this.text;
+        if(this.entireText == null){
 
-        for(let blc of this.args){
-            str += blc.texString();
+            let str = this.text;
+
+            for(let blc of this.args){
+                str += blc.texString();
+            }
+
+            this.entireText = this.addSubSup(str);
         }
 
-        return this.addSubSup(str);
+        return this.entireText;
     }
 
     listTex() : string[] {
@@ -175,7 +204,7 @@ export class TexMacro extends TexNode {
     }    
 }
 
-export class TexLeaf extends TexNode {
+export class TexLeaf extends TexText {
     public constructor(text : string){
         super(text);
     }
@@ -189,7 +218,12 @@ export class TexLeaf extends TexNode {
     }
 
     texString() : string {
-        return this.addSubSup(this.text);
+        if(this.entireText == null){
+
+            this.entireText = this.addSubSup(this.text);
+        }
+
+        return this.entireText;
     }
 
     listTex() : string[] {
@@ -206,10 +240,6 @@ export class TexEnv extends TexNode {
     children : TexNode[] = [];
     end : TexMacro;
 
-    public constructor(){
-        super("");
-    }
-
     clone() : TexEnv {
         const node = new TexEnv();
 
@@ -222,11 +252,16 @@ export class TexEnv extends TexNode {
     }
 
     texString() : string{
-        const begin_str = this.begin.texString();
-        const children_str = this.children.map(x => x.texString()).join(' ');
-        const end_str = this.end.texString();
-        
-        return `${begin_str}\n ${children_str} \n${end_str}`;
+        if(this.entireText == null){
+
+            const begin_str = this.begin.texString();
+            const children_str = this.children.map(x => x.texString()).join(' ');
+            const end_str = this.end.texString();
+            
+            this.entireText = `${begin_str}\n ${children_str} \n${end_str}`;
+        }
+
+        return this.entireText;
     }
 
     listTex() : string[]{
@@ -251,6 +286,74 @@ export class TexEnv extends TexNode {
     }
 }
 
+export function allNodes(node : TexNode, nodes : TexNode[]){
+    nodes.push(node);
+
+    if(node.sub != null){
+
+        node.sub.parent = node;
+        allNodes(node.sub, nodes);
+    }
+
+    if(node.sup != null){
+
+        node.sup.parent = node;
+        allNodes(node.sup, nodes);
+    }
+
+    if(node instanceof TexBlock){
+        for(const nd of node.children){
+            nd.parent = node;
+            allNodes(nd, nodes);
+        }
+    }
+    else if(node instanceof TexMacro){
+        for(const nd of node.args){
+            nd.parent = node;
+            allNodes(nd, nodes);
+        }
+    }
+    else if(node instanceof TexEnv){
+        for(const nd of node.children){
+            nd.parent = node;
+            allNodes(nd, nodes);
+        }
+    }
+}
+
+export function replace(node : TexNode, target : TexNode){
+    console.assert(node.parent != null);
+
+    if(node.parent.sub == node){
+        node.parent.sub = target;
+    }
+    else if(node.parent.sup == node){
+        node.parent.sup = target;
+    }
+    else if(node.parent instanceof TexBlock || node.parent instanceof TexEnv){
+        const idx = node.parent.children.indexOf(node);
+        if(idx == -1){
+            throw new Error();
+        }
+
+        node.parent.children[idx] = target;
+    }
+    else if(node.parent instanceof TexMacro){
+        const idx = node.parent.args.indexOf(node as TexBlock);
+        if(idx == -1){
+            throw new Error();
+        }
+
+        node.parent.args[idx] = target as TexBlock;
+    }
+    else{
+
+        throw new Error();
+    }
+
+    node.parent.invalidate();
+    target.parent = node.parent;
+}
 
 }
 

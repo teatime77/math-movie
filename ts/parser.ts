@@ -348,7 +348,7 @@ export class Parser {
 
         while(true){
             const node = this.parse();
-            if(node.text == "\\end"){
+            if(node instanceof TexText && node.text == "\\end"){
 
                 env.end = node as TexMacro;
                 break;
