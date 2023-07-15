@@ -74,6 +74,15 @@ export abstract class TexNode {
             yield `${txt}${s}`;
         }
     }
+
+    replace(src_str:string, dst:TexNode){
+        const src = nodeFromString(src_str);
+    
+        const eq_nodes = allNodes(this).filter(x => x.equals(src));
+        for(const nd of eq_nodes){
+            replace(nd, dst.clone());
+        }
+    }
 }
 
 export let targetNode : TexNode = null;

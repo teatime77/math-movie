@@ -73,6 +73,11 @@ function* generator(src_text: string){
                 
                 const root2 = root.clone();
                 const div2 = document.createElement("div");
+                div2.style.display = "inline-block";
+                div2.style.borderStyle= "solid";
+                div2.style.borderWidth = "1px";
+                div2.style.borderColor = "green";
+
                 document.body.appendChild(div2);
                 for(const s of root2.genTex()){
                     render(div2, s);
@@ -90,7 +95,7 @@ function* generator(src_text: string){
         }
 
         if(! in_tex){
-            if(line.startsWith("rep")){
+            if(line.startsWith("rep") || line.startsWith("cancel")){
                 yield* parseCommand(tex_nodes, line);
             }
             msg(`text ${line}`);

@@ -27,6 +27,13 @@ export function render(ele: HTMLElement, tex_text: string){
     }
     catch(e){
     }
+
+    const bases = ele.getElementsByClassName("base");
+    if(bases.length == 1){
+    
+        const rc : DOMRect = bases[0].getBoundingClientRect();
+        msg(`w:${rc.width} h:${rc.height} ${tex_text}`);
+    }
 }
 
 export function addHR(){

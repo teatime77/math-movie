@@ -434,4 +434,12 @@ export function closingParenthesis(text : string) : string {
     return '';
 }
 
+export function nodeFromString(text : string) : TexNode {
+    const tokens = lexicalAnalysis(text);
+
+    const parser = new Parser(tokens);
+
+    return parser.parse();
+}
+
 }

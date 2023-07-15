@@ -12,6 +12,11 @@ function* rep(tex_nodes : TexBlock[], args : TexNode[]){
     const eq_nodes = nodes.filter(x => x.equals(arg1));
 
     const div = document.createElement("div");
+    div.style.display = "inline-block";
+    div.style.borderStyle= "solid";
+    div.style.borderWidth = "1px";
+    div.style.borderColor = "red";
+
     document.body.appendChild(div);
 
     for(const nd of eq_nodes){
@@ -40,6 +45,58 @@ function* rep(tex_nodes : TexBlock[], args : TexNode[]){
     yield;
 }
 
+function* cancel(tex_nodes : TexBlock[], args : TexNode[]){
+
+    const root = tex_nodes[tex_nodes.length - 1].clone();
+    tex_nodes.push(root);
+
+    const nodes = allNodes(root);
+    
+
+    const div = document.createElement("div");
+    div.style.display = "inline-block";
+    div.style.borderStyle= "solid";
+    div.style.borderWidth = "1px";
+    div.style.borderColor = "blue";
+
+    document.body.appendChild(div);
+
+    for(const arg of args){
+        const eq_nodes = nodes.filter(x => x.equals(arg));
+
+        for(const nd of eq_nodes){
+            // const mac = nodeFromString("\\textcolor{red}{\\cancel{@}}");
+            // const mac = nodeFromString("\\cancel{\\textcolor{red}{@}}");
+            const mac = nodeFromString("\\cancel{@}");
+
+            mac.replace("@", nd);
+        
+            replace(nd, mac);
+
+            genPart = new PartialTex(mac);
+            while(true){
+                allNodes(root).forEach(x => x.entireText = null);
+                var str = root.texString();
+                msg(str);
+                render(div, str);
+                scrollToBottom();
+
+                if(genPart.done()){
+                    break;
+                }
+                yield;
+            }
+
+            genPart = null;
+            targetNode = null;
+        }
+    }
+
+    addHR();
+    yield;
+}
+
+
 export function* parseCommand(tex_nodes : TexBlock[], command: string){
     const tokens = lexicalAnalysis(command);
 
@@ -66,6 +123,9 @@ export function* parseCommand(tex_nodes : TexBlock[], command: string){
 
     if(tokens[0].text == "rep"){
         yield* rep(tex_nodes, args);
+    }
+    else if(tokens[0].text == "cancel"){
+        yield* cancel(tex_nodes, args);
     }
 
     yield;
