@@ -1,5 +1,5 @@
 namespace MathMovie {
-function* rep(tex_nodes : TexBlock[], args : TexNode[]){
+function* rep(parent : HTMLDivElement, tex_nodes : TexBlock[], args : TexNode[]){
     console.assert(args.length == 2);
     const arg1 = args[0];
     const arg2 = args[1];
@@ -12,12 +12,12 @@ function* rep(tex_nodes : TexBlock[], args : TexNode[]){
     const eq_nodes = nodes.filter(x => x.equals(arg1));
 
     const div = document.createElement("div");
-    div.style.display = "inline-block";
+    // div.style.display = "inline-block";
     div.style.borderStyle= "solid";
     div.style.borderWidth = "1px";
     div.style.borderColor = "red";
 
-    document.body.appendChild(div);
+    parent.appendChild(div);
 
     for(const nd of eq_nodes){
         const target = arg2.clone();
@@ -41,11 +41,11 @@ function* rep(tex_nodes : TexBlock[], args : TexNode[]){
         targetNode = null;
     }
 
-    addHR();
+    addHR(parent);
     yield;
 }
 
-function* cancel(tex_nodes : TexBlock[], args : TexNode[]){
+function* cancel(parent : HTMLDivElement, tex_nodes : TexBlock[], args : TexNode[]){
 
     const root = tex_nodes[tex_nodes.length - 1].clone();
     tex_nodes.push(root);
@@ -54,12 +54,12 @@ function* cancel(tex_nodes : TexBlock[], args : TexNode[]){
     
 
     const div = document.createElement("div");
-    div.style.display = "inline-block";
+    // div.style.display = "inline-block";
     div.style.borderStyle= "solid";
     div.style.borderWidth = "1px";
     div.style.borderColor = "blue";
 
-    document.body.appendChild(div);
+    parent.appendChild(div);
 
     for(const arg of args){
         const eq_nodes = nodes.filter(x => x.equals(arg));
@@ -92,12 +92,12 @@ function* cancel(tex_nodes : TexBlock[], args : TexNode[]){
         }
     }
 
-    addHR();
+    addHR(parent);
     yield;
 }
 
 
-export function* parseCommand(tex_nodes : TexBlock[], command: string){
+export function* parseCommand(parent : HTMLDivElement, tex_nodes : TexBlock[], command: string){
     const tokens = lexicalAnalysis(command);
 
     let in_math = false;
@@ -122,10 +122,10 @@ export function* parseCommand(tex_nodes : TexBlock[], command: string){
     }
 
     if(tokens[0].text == "rep"){
-        yield* rep(tex_nodes, args);
+        yield* rep(parent, tex_nodes, args);
     }
     else if(tokens[0].text == "cancel"){
-        yield* cancel(tex_nodes, args);
+        yield* cancel(parent, tex_nodes, args);
     }
 
     yield;

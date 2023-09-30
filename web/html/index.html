@@ -2,48 +2,87 @@
 <!-- KaTeX requires the use of the HTML5 doctype. Without it, KaTeX may not render properly -->
 <html>
   <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous"> -->
 
     <!-- The loading of KaTeX is deferred to speed up page rendering -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4" crossorigin="anonymous"></script>
+    <!-- <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4" crossorigin="anonymous"></script> -->
 
     <!-- To automatically render math in text elements, include the auto-render extension: -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
-        onload="renderMathInElement(document.body);"></script>
+    <!-- <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script> -->
+
+
+    <link rel="stylesheet" href="../katex/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous">
+
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <script defer src="../katex/katex.min.js" integrity="sha384-cpW21h6RZv/phavutF+AuVYrr+dA8xD9zs6FwLpaCct6O9ctzYFfFr4dgmgccOTx" crossorigin="anonymous"></script>
+
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <script defer src="../katex/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
+    
+
+
 
         <script type="text/javascript" src="../js/main.js?ver=1"></script>
 
 <script>
 </script>
+
+<script>
+  function getUserMacros(){
+    return {
+        "\\dif" : "\\frac{d #1}{d #2}",
+        "\\pdif" : "\\frac{\\partial #1}{\\partial #2}",
+        "\\pddif" : "\\frac{\\partial^2 #1}{\\partial {#2}^2}",
+        "\\b" : "\\boldsymbol{#1}"
+    };
+  }
+  document.addEventListener("DOMContentLoaded", function() {
+      renderMathInElement(document.body, {
+        // customised options
+        // • auto-render specific keys, e.g.:
+        delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+        ],
+        // • rendering keys, e.g.:
+        throwOnError : false
+      });
+  });
+</script>
+
 </head>
 <body onload="MathMovie.bodyOnLoad()">
-間隔 : <input type="number" value="50" id="interval" />
+間隔 : <input type="number" value="0" id="interval" />
 $$
 \newcommand{\dd}[2]{d^#1 #2}  \\
 \newcommand{\pdv}[2]{\frac{\partial #1}{\partial #2}} \\
-\dd{}{x} \\
-a^{b_c^d} \\
 
-\int_{-\infty}^\infty \pi dx
+\pdv{f}{x}
+\tag{1}
 $$
 
-<div id="d1"></div>
+<select id="data-select" >
+  <option value=""></option>
+  <option value="diff-eq/sep-var-1" >変数分離形</option>
+  <option value="diff-eq/sep-var-2">変数分離形 ( dy/dx = f(a x + b y + c) )</option>
+  <option value="diff-eq/sep-var-3">同次形</option>
+  <option value="diff-eq/1-linear">1階線形微分方程式</option>
+  <option value="diff-eq/bernoulli">ベルヌーイ形 微分方程式</option>
+  <option value="qm1">qm1</option>
+  <option value="qm2">qm2</option>
+  <option value="test">test</option>
+  <option value="量子力学/シュレディンガー方程式">シュレディンガー方程式</option>
 
-<!-- 
-</textarea>
+  
+  <option value="場の量子論/ディラック方程式/アイデア">場の量子論/ディラック方程式/アイデア</option>
+  <option value="場の量子論/クライン-ゴルドン方程式/クライン-ゴルドン方程式">場の量子論/クライン-ゴルドン方程式/クライン-ゴルドン方程式</option>
+  <option value=""></option>
+</select>
 
-<textarea style="display: none">
 
-  rep(#0.0, (f * g));
- -->
-<button onclick="MathMovie.onDataClicked(this)">test</button>
-
-<a class="data-link" href="javascript:void(0);">qm1</a> <br/>
-<a class="data-link" href="javascript:void(0);">qm2</a> <br/>
-<a class="data-link" href="javascript:void(0);">test</a> <br/>
-
-<textarea style="display:block" cols="180" rows="20" id="mul-dif">
-</textarea>
 
 </body>
 </html>

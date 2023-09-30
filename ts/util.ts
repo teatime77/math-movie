@@ -1,4 +1,6 @@
 var katex : any;
+var getUserMacros;
+
 const macros = {
     "\\RR": "\\mathbb{R}",
     "\\pdv": "\\frac{\\partial #1}{\\partial #2}",
@@ -22,7 +24,7 @@ export function render(ele: HTMLElement, tex_text: string){
         katex.render(tex_text, ele, {
             throwOnError: false,
             displayMode : true,
-            macros
+            macros : getUserMacros()
         });    
     }
     catch(e){
@@ -36,9 +38,9 @@ export function render(ele: HTMLElement, tex_text: string){
     }
 }
 
-export function addHR(){
+export function addHR(div : HTMLDivElement){
     const hr = document.createElement("hr");
-    document.body.appendChild(hr);
+    div.appendChild(hr);
 }
 
 export function scrollToBottom(){

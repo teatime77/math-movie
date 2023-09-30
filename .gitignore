@@ -1,4 +1,5 @@
-web/data/*.md
+web/data/**/*.md
 web/data/*.txt
 web/js/main.js.map
 web/js/main.js
+web/katex
