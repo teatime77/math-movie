@@ -1,7 +1,11 @@
 namespace MathMovie {
 const oprTex = { "*":"\\cdot", "=":"=" , "!=":"\\neq" , "<":"\\lt", "<=":"\\leqq", ">":"\\gt" , ">=":"\\geqq" };
 
-export abstract class TexNode {
+export abstract class Node {
+    div : HTMLDivElement;
+}
+
+export abstract class TexNode extends Node {
     parent : TexNode = null;
     sub : TexNode = null;
     sup : TexNode = null;
@@ -17,7 +21,7 @@ export abstract class TexNode {
         }
     }
 
-    cloneSubSub(node: TexNode){
+    cloneSubSup(node: TexNode){
         if(node.sub != null){
             this.sub = node.sub.clone();
         }
@@ -27,7 +31,7 @@ export abstract class TexNode {
         }
     }
 
-    addSubSup(text: string){
+    addSubSup(text: string) : string {
         if(this.sub != null){
             text += `_${this.sub.texString()}`;
         }
@@ -126,7 +130,7 @@ export class TexBlock extends TexNode {
     clone() : TexBlock {
         const node = new TexBlock(this.opening_parenthesis);
 
-        node.cloneSubSub(this);
+        node.cloneSubSup(this);
         node.children = this.children.map(x => x.clone());
         node.closing_parenthesis = this.closing_parenthesis;
 
@@ -186,7 +190,7 @@ export class TexMacro extends TexText {
     clone() : TexMacro {
         const node = new TexMacro(this.text);
 
-        node.cloneSubSub(this);
+        node.cloneSubSup(this);
         node.args = this.args.map(x => x.clone());
 
         return node;
@@ -235,7 +239,7 @@ export class TexLeaf extends TexText {
     clone() : TexLeaf {
         const node = new TexLeaf(this.text);
 
-        node.cloneSubSub(this);
+        node.cloneSubSup(this);
 
         return node;
     }
@@ -267,7 +271,7 @@ export class TexEnv extends TexNode {
     clone() : TexEnv {
         const node = new TexEnv();
 
-        node.cloneSubSub(this);
+        node.cloneSubSup(this);
         node.begin = this.begin.clone();
         node.children = this.children.map(x => x.clone());
         node.end   = this.end.clone();
@@ -349,37 +353,38 @@ export function allNodes(node : TexNode, nodes : TexNode[] = []) : TexNode[] {
 }
 
 export function replace(node : TexNode, target : TexNode){
-    console.assert(node.parent != null);
+    const parent = node.parent;
+    console.assert(parent != null);
 
-    if(node.parent.sub == node){
-        node.parent.sub = target;
+    if(parent.sub == node){
+        parent.sub = target;
     }
-    else if(node.parent.sup == node){
-        node.parent.sup = target;
+    else if(parent.sup == node){
+        parent.sup = target;
     }
-    else if(node.parent instanceof TexBlock || node.parent instanceof TexEnv){
-        const idx = node.parent.children.indexOf(node);
+    else if(parent instanceof TexBlock || parent instanceof TexEnv){
+        const idx = parent.children.indexOf(node);
         if(idx == -1){
             throw new Error();
         }
 
-        node.parent.children[idx] = target;
+        parent.children[idx] = target;
     }
-    else if(node.parent instanceof TexMacro){
-        const idx = node.parent.args.indexOf(node as TexBlock);
+    else if(parent instanceof TexMacro){
+        const idx = parent.args.indexOf(node as TexBlock);
         if(idx == -1){
             throw new Error();
         }
 
-        node.parent.args[idx] = target as TexBlock;
+        parent.args[idx] = target as TexBlock;
     }
     else{
 
         throw new Error();
     }
 
-    node.parent.invalidate();
-    target.parent = node.parent;
+    parent.invalidate();
+    target.parent = parent;
 }
 
 }

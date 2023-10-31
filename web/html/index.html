@@ -55,6 +55,13 @@
 
 </head>
 <body onload="MathMovie.bodyOnLoad()">
+モード : 
+<select id="mode-select">
+  <option value="tree" selected >ツリー</option>
+  <option value="line" >直列</option>
+</select>
+<br/>
+
 間隔 : <input type="number" value="0" id="interval" />
 $$
 \newcommand{\dd}[2]{d^#1 #2}  \\
@@ -66,6 +73,9 @@ $$
 
 <select id="data-select" >
   <option value=""></option>
+  <option value="derivative/rule1">微分公式１</option>
+  <option value="derivative/lap">ラプラシアン</option>
+
   <option value="diff-eq/sep-var-1" >変数分離形</option>
   <option value="diff-eq/sep-var-2">変数分離形 ( dy/dx = f(a x + b y + c) )</option>
   <option value="diff-eq/sep-var-3">同次形</option>

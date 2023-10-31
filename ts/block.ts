@@ -15,15 +15,16 @@ function max(v : number[]){
 }
 
 export class Block {
+    nodes : Node[] = [];
     div : HTMLDivElement;
-    blockId : number;
+    blockId : string;
     bottom : number = 0;
     ins : Block[];
     outs : Block[] = [];
     lane : number = NaN;
     left : number;
 
-    constructor(block_id : number, ins : Block[]){
+    constructor(block_id : string, ins : Block[]){
         this.blockId = block_id;
         this.ins = ins;
 

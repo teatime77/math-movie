@@ -52,11 +52,18 @@ function* generator(src_text: string){
     const parent : HTMLDivElement = document.createElement("div");
     document.body.appendChild(parent);
 
-    // yield* readBlock(parent, lines);
-    makeBlockTree(parent, lines);
+    const mode_select = document.getElementById("mode-select") as HTMLSelectElement;
+    if(mode_select.value == "tree"){
+
+        makeBlockTree(parent, lines);
+    }
+    else{
+
+        yield* readBlock(parent, lines);
+    }
 }
 
-function markdown(parent : HTMLDivElement, line : string){
+function markdown(block : Block, line : string){
     line = line.trim();
 
     let ele : HTMLElement;
@@ -71,7 +78,7 @@ function markdown(parent : HTMLDivElement, line : string){
     else{
         ele = document.createElement("div");
         ele.innerHTML = line;
-        parent.appendChild( ele );
+        block.div.appendChild( ele );
 
         if(line.includes("$")){
             (window as any).renderMathInElement(ele, {
@@ -91,7 +98,7 @@ function markdown(parent : HTMLDivElement, line : string){
         return;
     }
 
-    parent.appendChild( ele );
+    block.div.appendChild( ele );
 }
 
 function makeTD(tr : HTMLTableRowElement){
@@ -129,18 +136,17 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
                     if(block != null){
                         console.log(`block w:${block.div.clientWidth} h:${block.div.clientHeight} ins:${block.ins}`)
                     }
-                    const block_id = parseInt(tokens[1]);
 
                     let ins : Block[] = [];
                     if(tokens.length == 4){
                         console.assert(tokens[2] == "from");
 
-                        const ins_str = tokens[3].split(",");
-                        const ins_id = ins_str.map(x => parseInt(x));
-                        ins = ins_id.map(id => blocks.find(x => x.blockId == id));
+                        const ins_str = tokens[3].split(",").map(x => x.trim());
+                        ins = ins_str.map(id => blocks.find(x => x.blockId == id));
                         console.assert(ins.every(x => x != undefined));
                     }
 
+                    const block_id = tokens[1];
                     block = new Block(block_id, ins);
                     blocks.push(block);
 
@@ -167,6 +173,8 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
                 const parser = new Parser(tokens);
 
                 const root = new TexBlock('');
+                block.nodes.push(root);
+
                 while(! parser.isEoT()){
                     const node = parser.parse();
                     root.children.push(node);
@@ -175,15 +183,15 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
                 tex_nodes.push(root);
                 
                 const root2 = root.clone();
-                const div2 = document.createElement("div");
-                div2.style.display = "inline-block";
-                div2.style.borderStyle= "solid";
-                div2.style.borderWidth = "1px";
-                div2.style.borderColor = "green";
+                root.div = document.createElement("div");
+                root.div.style.display = "inline-block";
+                root.div.style.borderStyle= "solid";
+                root.div.style.borderWidth = "1px";
+                root.div.style.borderColor = "green";
             
-                block.div.appendChild(div2);
+                block.div.appendChild(root.div);
                 for(const s of root2.genTex()){
-                    render(div2, s);
+                    render(root.div, s);
                     scrollToBottom();
                 }
 
@@ -210,7 +218,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
                     continue;
                 }
                 else{
-                    markdown(block.div, line);
+                    markdown(block, line);
                 }
                 msg(`text ${line}`);
             }
@@ -219,9 +227,12 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
 
     const roots = blocks.filter(x => x.outs.length == 0);
     for(const blc of roots){
-        console.log(`root:${blc.blockId}`);
-
         blc.calcBottom(null);
+
+        console.log(`root:${blc.blockId} bottom:${blc.bottom} top:${blc.top}`);
+    }
+    for(const blc of blocks){
+        console.log(`root:${blc.blockId} bottom:${blc.bottom} top:${blc.top} ins:[${blc.ins.map(x => x.blockId)}] outs:[${blc.outs.map(x => x.blockId)}]`);
     }
 
     lanes = [];
@@ -287,13 +298,7 @@ function* readBlock(parent : HTMLDivElement, lines : string[]){
 
             const tokens = line.split(/\s+/);
             if(tokens.length != 0){
-                if(tokens[0] == "}"){
-                    console.assert(tokens.length == 1);
-
-                    break;
-                }
-                else if(tokens[0] == "block"){
-                    console.assert(tokens.length == 2 && tokens[1] == "{");
+                if(tokens[0] == "block"){
 
                     const sub_block : HTMLDivElement = document.createElement("div");
                     sub_block.style.display = "flex";
@@ -307,22 +312,6 @@ function* readBlock(parent : HTMLDivElement, lines : string[]){
                     parent.appendChild(sub_block);
 
                     yield* readBlock(sub_block, lines);
-                    continue;
-                }
-                else if(tokens[0] == "branch"){
-
-                    console.assert(tokens.length == 2 && tokens[1] == "{");
-
-                    const flex_div : HTMLDivElement = document.createElement("div");
-                    flex_div.style.display = "flex";
-                    flex_div.style.borderStyle= "solid";
-                    flex_div.style.borderWidth = "1px";
-                    flex_div.style.borderColor = "cyan";
-                    flex_div.style.justifyContent = "space-around";
-
-                    parent.appendChild(flex_div);
-
-                    yield* readBlock(flex_div, lines);
                     continue;
                 }
             }
@@ -382,7 +371,7 @@ function* readBlock(parent : HTMLDivElement, lines : string[]){
                     yield* parseCommand(parent, tex_nodes, line);
                 }
                 else{
-                    markdown(parent, line);
+                    // markdown(parent, line);
                 }
                 msg(`text ${line}`);
             }

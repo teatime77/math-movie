@@ -310,7 +310,7 @@ export class Parser {
         this.readNextToken();
     }
 
-    readBlock(){
+    readTexBlock(){
         const closing_parenthesis = closingParenthesis(this.currentToken.text);
     
         const blc = new TexBlock(this.currentToken.text);
@@ -332,7 +332,7 @@ export class Parser {
         const mac = new TexMacro(text);
 
         while(this.isArgs()){
-            const blc = this.readBlock();
+            const blc = this.readTexBlock();
     
             mac.args.push(blc);    
         }
@@ -384,7 +384,7 @@ export class Parser {
         const text = this.currentToken.text;
 
         if(text == '{' || text == '[' || text == '('){
-            node = this.readBlock();                
+            node = this.readTexBlock();                
         }
         else if(this.currentToken.typeTkn == TokenType.identifier){
 
