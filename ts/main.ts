@@ -60,14 +60,12 @@ function* generator(src_text: string){
 
     const mode_select = document.getElementById("mode-select") as HTMLSelectElement;
     if(mode_select.value == "tree"){
-
-        let [blocks , tbl] = makeBlockTree(parent, lines);
-        yield* showBlockTree(parent, blocks, tbl);
     }
     else{
-
-        yield* readBlock(parent, lines);
     }
+
+    let [blocks , tbl] = makeBlockTree(parent, lines);
+    yield* showBlockTree(parent, blocks, tbl);
 }
 
 function makeTD(tr : HTMLTableRowElement){
@@ -288,92 +286,6 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
 
     parent_div.removeChild(tbl);
 
-}
-
-
-function* readBlock(parent : HTMLDivElement, lines : string[]){
-    let block = new Block("dummy", []);
-
-    const tex_nodes : TexBlock[] = [];
-    let in_tex = false;
-    let tex_lines = "";
-    while (lines.length != 0) {
-        const line = lines.shift().trim();
-
-        if(! in_tex){
-
-            const tokens = line.split(/\s+/);
-            if(tokens.length != 0){
-                if(tokens[0] == "block"){
-
-                    const sub_block : HTMLDivElement = document.createElement("div");
-                    sub_block.style.display = "flex";
-                    sub_block.style.flexDirection = "column";
-                    sub_block.style.flexBasis = "auto";
-                    sub_block.style.borderStyle= "solid";
-                    sub_block.style.borderWidth = "1px";
-                    sub_block.style.borderColor = "red";
-                    sub_block.style.justifyContent = "center";
-
-                    parent.appendChild(sub_block);
-
-                    yield* readBlock(sub_block, lines);
-                    continue;
-                }
-            }
-        }
-
-        if(line == "$$"){
-            in_tex = ! in_tex;
-
-            if(! in_tex && tex_lines != ""){
-
-                const root = new TexBlock('');
-                root.parseLines(block, tex_lines)
-
-                tex_nodes.push(root);
-                
-                const root2 = root.clone();
-                const div2 = document.createElement("div");
-                div2.style.display = "inline-block";
-                div2.style.borderStyle= "solid";
-                div2.style.borderWidth = "1px";
-                div2.style.borderColor = "green";
-
-                parent.appendChild(div2);
-                for(const s of root2.genTex()){
-                    render(div2, s);
-                    // scrollToBottom();
-                    yield;
-                }
-
-                addHR(parent);
-            }
-            tex_lines = "";
-        }
-        else{
-
-            if(in_tex){
-                if(! line.startsWith("\\gdef")){
-
-                    tex_lines += line;
-                }
-            }
-            else{
-
-                const commands = [ "rep", "cancel" ]
-                if(commands.some(x => line.startsWith(x))){
-                    yield* parseCommand(parent, tex_nodes, line);
-                }
-                else{
-                    // new HtmlNode(parent, line);
-                }
-                msg(`text ${line}`);
-            }
-        }
-
-        yield;
-    }
 }
 
 }
