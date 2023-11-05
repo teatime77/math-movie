@@ -2,7 +2,67 @@ namespace MathMovie {
 const oprTex = { "*":"\\cdot", "=":"=" , "!=":"\\neq" , "<":"\\lt", "<=":"\\leqq", ">":"\\gt" , ">=":"\\geqq" };
 
 export abstract class Node {
-    div : HTMLDivElement;
+    html : HTMLElement;
+
+    hide(){
+        if(this.html == undefined){
+            msg("");
+        }
+        this.html.style.visibility = "hidden";
+    }
+
+    show(){
+        this.html.style.visibility = "visible";
+    }
+}
+
+export class HtmlNode extends Node {
+    line : string;
+
+    constructor(block : Block, line : string){
+        super();
+
+        line = line.trim();
+        this.line = line;
+        block.nodes.push(this);
+
+        let ele : HTMLElement;
+    
+        if(line.startsWith("#")){
+            ele = document.createElement("h1");
+            ele.innerText = line.substring(1);
+        }
+        else if(line == "---"){
+            ele = document.createElement("hr");
+        }
+        else{
+            ele = document.createElement("div");
+            ele.innerHTML = line;
+
+            this.html = ele;
+            block.div.appendChild( ele );
+    
+            if(line.includes("$")){
+                (window as any).renderMathInElement(ele, {
+                    // customised options
+                    // • auto-render specific keys, e.g.:
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    // • rendering keys, e.g.:
+                    throwOnError : false
+                  });
+                console.log(`-------------------------- ${line} ------------------------------`)
+            }
+            return;
+        }
+    
+        this.html = ele;
+        block.div.appendChild( ele );
+    }
 }
 
 export abstract class TexNode extends Node {
@@ -135,6 +195,20 @@ export class TexBlock extends TexNode {
         node.closing_parenthesis = this.closing_parenthesis;
 
         return node;
+    }
+
+    parseLines(block : Block, tex_lines : string){
+        const tokens = lexicalAnalysis(tex_lines);
+
+        const parser = new Parser(tokens);
+
+        block.nodes.push(this);
+
+        while(! parser.isEoT()){
+            const node = parser.parse();
+            this.children.push(node);
+        }
+
     }
 
     initString() : string {

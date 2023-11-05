@@ -29,7 +29,7 @@ function* rep(parent : HTMLDivElement, tex_nodes : TexBlock[], args : TexNode[])
             var str = root.texString();
             msg(str);
             render(div, str);
-            scrollToBottom();
+            // scrollToBottom();
 
             if(genPart.done()){
                 break;
@@ -79,7 +79,7 @@ function* cancel(parent : HTMLDivElement, tex_nodes : TexBlock[], args : TexNode
                 var str = root.texString();
                 msg(str);
                 render(div, str);
-                scrollToBottom();
+                // scrollToBottom();
 
                 if(genPart.done()){
                     break;

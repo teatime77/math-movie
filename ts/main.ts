@@ -61,50 +61,13 @@ function* generator(src_text: string){
     const mode_select = document.getElementById("mode-select") as HTMLSelectElement;
     if(mode_select.value == "tree"){
 
-        makeBlockTree(parent, lines);
+        let [blocks , tbl] = makeBlockTree(parent, lines);
+        yield* showBlockTree(parent, blocks, tbl);
     }
     else{
 
         yield* readBlock(parent, lines);
     }
-}
-
-function markdown(block : Block, line : string){
-    line = line.trim();
-
-    let ele : HTMLElement;
-
-    if(line.startsWith("#")){
-        ele = document.createElement("h1");
-        ele.innerText = line.substring(1);
-    }
-    else if(line == "---"){
-        ele = document.createElement("hr");
-    }
-    else{
-        ele = document.createElement("div");
-        ele.innerHTML = line;
-        block.div.appendChild( ele );
-
-        if(line.includes("$")){
-            (window as any).renderMathInElement(ele, {
-                // customised options
-                // • auto-render specific keys, e.g.:
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\(', right: '\\)', display: false},
-                    {left: '\\[', right: '\\]', display: true}
-                ],
-                // • rendering keys, e.g.:
-                throwOnError : false
-              });
-            console.log(`-------------------------- ${line} ------------------------------`)
-        }
-        return;
-    }
-
-    block.div.appendChild( ele );
 }
 
 function makeTD(tr : HTMLTableRowElement){
@@ -118,10 +81,10 @@ function makeTD(tr : HTMLTableRowElement){
 }
 
 
-export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
+export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [Block[] , HTMLTableElement]{
     let blocks : Block[] = [];
 
-    const tbl = document.createElement("table");
+    const tbl : HTMLTableElement = document.createElement("table");
     let block : Block = null;
 
     let tr : HTMLTableRowElement;
@@ -170,35 +133,22 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
 
             if(! in_tex && tex_lines != ""){
 
-                msg("----------- tex lines");
-                msg(tex_lines);
-                msg("-----------");
-
-                const tokens = lexicalAnalysis(tex_lines);
-
-                const parser = new Parser(tokens);
-
                 const root = new TexBlock('');
-                block.nodes.push(root);
-
-                while(! parser.isEoT()){
-                    const node = parser.parse();
-                    root.children.push(node);
-                }
+                root.parseLines(block, tex_lines);
 
                 tex_nodes.push(root);
                 
                 const root2 = root.clone();
-                root.div = document.createElement("div");
-                root.div.style.display = "inline-block";
-                root.div.style.borderStyle= "solid";
-                root.div.style.borderWidth = "1px";
-                root.div.style.borderColor = "green";
+                root.html = document.createElement("div");
+                root.html.style.display = "inline-block";
+                root.html.style.borderStyle= "solid";
+                root.html.style.borderWidth = "1px";
+                root.html.style.borderColor = "green";
             
-                block.div.appendChild(root.div);
+                block.div.appendChild(root.html);
                 for(const s of root2.genTex()){
-                    render(root.div, s);
-                    scrollToBottom();
+                    render(root.html, s);
+                    // scrollToBottom();
                 }
 
                 addHR(block.div);
@@ -224,12 +174,25 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
                     continue;
                 }
                 else{
-                    markdown(block, line);
+                    new HtmlNode(block, line);
                 }
                 msg(`text ${line}`);
             }
         }
     }
+
+    for(const blc of blocks){
+        const rc2 = blc.div.getBoundingClientRect();
+
+        blc.div.style.width  = `${rc2.width}px`;
+        blc.div.style.height = `${rc2.height}px`;
+    }
+
+    return [blocks, tbl];
+}
+
+
+function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTMLTableElement){
 
     const roots = blocks.filter(x => x.outs.length == 0);
     for(const blc of roots){
@@ -268,6 +231,11 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
     diagDiv.style.borderColor = "orange";
 
     for(const blc of blocks){
+        for(const node of blc.nodes){
+            node.hide();
+        }
+    }
+    for(const blc of blocks){
         const top = blc.top;
 
         blc.div.parentElement.removeChild(blc.div);
@@ -276,6 +244,9 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
         blc.div.style.left = `${blc.left}px`;
         blc.div.style.top  = `${total_height - top}px`;
         diagDiv.appendChild(blc.div);
+    }
+
+    for(const blc of blocks){
 
         for(const in_blc of blc.ins){
             const rc = mathView.svg.getBoundingClientRect();
@@ -295,6 +266,24 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
 
             console.log(`id:${in_blc.blockId}=>${blc.blockId} (${x1},${y1}) => (${x2},${y2}`)
         }
+
+        for(const root of blc.nodes){
+            if(root instanceof TexBlock){
+
+                root.html.innerHTML = "";
+                root.show();
+
+                const root2 = root.clone();
+                for(const s of root2.genTex()){
+                    render(root.html, s);
+                    // scrollToBottom();
+                    yield;
+                }
+            }
+            else if(root instanceof HtmlNode){
+                root.show();
+            }
+        }
     }
 
     parent_div.removeChild(tbl);
@@ -303,6 +292,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]){
 
 
 function* readBlock(parent : HTMLDivElement, lines : string[]){
+    let block = new Block("dummy", []);
 
     const tex_nodes : TexBlock[] = [];
     let in_tex = false;
@@ -338,19 +328,8 @@ function* readBlock(parent : HTMLDivElement, lines : string[]){
 
             if(! in_tex && tex_lines != ""){
 
-                msg("----------- tex lines");
-                msg(tex_lines);
-                msg("-----------");
-
-                const tokens = lexicalAnalysis(tex_lines);
-
-                const parser = new Parser(tokens);
-
                 const root = new TexBlock('');
-                while(! parser.isEoT()){
-                    const node = parser.parse();
-                    root.children.push(node);
-                }
+                root.parseLines(block, tex_lines)
 
                 tex_nodes.push(root);
                 
@@ -364,7 +343,7 @@ function* readBlock(parent : HTMLDivElement, lines : string[]){
                 parent.appendChild(div2);
                 for(const s of root2.genTex()){
                     render(div2, s);
-                    scrollToBottom();
+                    // scrollToBottom();
                     yield;
                 }
 
@@ -387,7 +366,7 @@ function* readBlock(parent : HTMLDivElement, lines : string[]){
                     yield* parseCommand(parent, tex_nodes, line);
                 }
                 else{
-                    // markdown(parent, line);
+                    // new HtmlNode(parent, line);
                 }
                 msg(`text ${line}`);
             }
