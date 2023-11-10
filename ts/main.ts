@@ -164,10 +164,9 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
             }
             else{
             
-                const commands = [ "rep", "cancel" ]
-                if(commands.some(x => line.startsWith(x))){
+                if(line.startsWith("rep")){
                     console.log(`!!!!!!!!!! ${line} !!!!!!!!!!`);
-                    // new CommandNode(parent_td, line);
+                    new ReplaceNode(parent_td, line);
                 }
                 else if(line == ""){
                     continue;

@@ -1,58 +1,5 @@
 namespace MathMovie {
 
-/*
-function* cancel(parent : HTMLDivElement, args : TexNode[]){
-
-    const root = lastTexSeq.clone();
-    lastTexSeq = root;
-
-    const nodes = allNodes(root);
-    
-
-    const div = document.createElement("div");
-    // div.style.display = "inline-block";
-    div.style.borderStyle= "solid";
-    div.style.borderWidth = "1px";
-    div.style.borderColor = "blue";
-
-    parent.appendChild(div);
-
-    for(const arg of args){
-        const eq_nodes = nodes.filter(x => x.equals(arg));
-
-        for(const nd of eq_nodes){
-            // const mac = nodeFromString("\\textcolor{red}{\\cancel{@}}");
-            // const mac = nodeFromString("\\cancel{\\textcolor{red}{@}}");
-            const mac = nodeFromString("\\cancel{@}");
-
-            mac.replace("@", nd);
-        
-            replace(nd, mac);
-
-            genPart = new PartialTex(mac);
-            while(true){
-                allNodes(root).forEach(x => x.entireText = null);
-                var str = root.texString();
-                msg(str);
-                render(div, str);
-                // scrollToBottom();
-
-                if(genPart.done()){
-                    break;
-                }
-                yield;
-            }
-
-            genPart = null;
-            targetNode = null;
-        }
-    }
-
-    addHR(parent);
-    yield;
-}
-
-
 export class CommandNode extends Node {
     constructor(parent : HTMLDivElement, command: string){
         super();
@@ -86,9 +33,6 @@ export class CommandNode extends Node {
         
             console.assert(args.length == 2);
             yield* rep(parent, root, args[0], args[1]);
-        }
-        else if(tokens[0].text == "cancel"){
-            yield* cancel(parent, args);
         }
 
         yield;
@@ -133,5 +77,9 @@ export class CommandNode extends Node {
     }
 
 }
-*/
+
+export class ReplaceNode extends CommandNode {
+
+}
+
 }
