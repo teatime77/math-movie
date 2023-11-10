@@ -140,9 +140,9 @@ export abstract class TexNode extends Node {
     }
 
     replace(src_str:string, dst:TexNode){
-        const src = nodeFromString(src_str);
+        const arg1 = nodeFromString(src_str);
     
-        const eq_nodes = allNodes(this).filter(x => x.equals(src));
+        const eq_nodes = allNodes(this).filter(x => x.equals(arg1));
         for(const nd of eq_nodes){
             replace(nd, dst.clone());
         }
@@ -176,7 +176,7 @@ export class PartialTex {
 
 export let genPart : PartialTex;
 
-export class TexBlock extends TexNode {
+export class TexSeq extends TexNode {
     children : TexNode[] = [];
     opening_parenthesis : string;
     closing_parenthesis : string;
@@ -187,8 +187,8 @@ export class TexBlock extends TexNode {
         this.closing_parenthesis = closingParenthesis(this.opening_parenthesis);
     }
 
-    clone() : TexBlock {
-        const node = new TexBlock(this.opening_parenthesis);
+    clone() : TexSeq {
+        const node = new TexSeq(this.opening_parenthesis);
 
         node.cloneSubSup(this);
         node.children = this.children.map(x => x.clone());
@@ -255,7 +255,7 @@ export abstract class TexText extends TexNode {
 }
 
 export class TexMacro extends TexText {
-    args : TexBlock[] = [];
+    args : TexSeq[] = [];
 
     public constructor(text : string){
         super(text);
@@ -404,7 +404,7 @@ export function allNodes(node : TexNode, nodes : TexNode[] = []) : TexNode[] {
         allNodes(node.sup, nodes);
     }
 
-    if(node instanceof TexBlock){
+    if(node instanceof TexSeq){
         for(const nd of node.children){
             nd.parent = node;
             allNodes(nd, nodes);
@@ -436,7 +436,7 @@ export function replace(node : TexNode, target : TexNode){
     else if(parent.sup == node){
         parent.sup = target;
     }
-    else if(parent instanceof TexBlock || parent instanceof TexEnv){
+    else if(parent instanceof TexSeq || parent instanceof TexEnv){
         const idx = parent.children.indexOf(node);
         if(idx == -1){
             throw new Error();
@@ -445,12 +445,12 @@ export function replace(node : TexNode, target : TexNode){
         parent.children[idx] = target;
     }
     else if(parent instanceof TexMacro){
-        const idx = parent.args.indexOf(node as TexBlock);
+        const idx = parent.args.indexOf(node as TexSeq);
         if(idx == -1){
             throw new Error();
         }
 
-        parent.args[idx] = target as TexBlock;
+        parent.args[idx] = target as TexSeq;
     }
     else{
 

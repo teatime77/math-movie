@@ -1,6 +1,8 @@
 
 namespace MathMovie {
 
+export let lastTexSeq : TexSeq;
+
 var interval : number;
 var iterator;
 var timerId : number;
@@ -89,7 +91,6 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
 
     parent_div.appendChild(tbl);
 
-    const tex_nodes : TexBlock[] = [];
     let in_tex = false;
     let tex_lines = "";
     while (lines.length != 0) {
@@ -131,10 +132,10 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
 
             if(! in_tex && tex_lines != ""){
 
-                const root = new TexBlock('');
+                const root = new TexSeq('');
                 root.parseLines(block, tex_lines);
 
-                tex_nodes.push(root);
+                lastTexSeq = root;
                 
                 const root2 = root.clone();
                 root.html = document.createElement("div");
@@ -166,7 +167,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
                 const commands = [ "rep", "cancel" ]
                 if(commands.some(x => line.startsWith(x))){
                     console.log(`!!!!!!!!!! ${line} !!!!!!!!!!`);
-                    // yield* parseCommand(parent_td, tex_nodes, line);
+                    // new CommandNode(parent_td, line);
                 }
                 else if(line == ""){
                     continue;
@@ -266,7 +267,7 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
         }
 
         for(const root of blc.nodes){
-            if(root instanceof TexBlock){
+            if(root instanceof TexSeq){
 
                 root.html.innerHTML = "";
                 root.show();

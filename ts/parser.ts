@@ -313,7 +313,7 @@ export class Parser {
     readTexBlock(){
         const closing_parenthesis = closingParenthesis(this.currentToken.text);
     
-        const blc = new TexBlock(this.currentToken.text);
+        const blc = new TexSeq(this.currentToken.text);
 
         this.readNextToken();
 
