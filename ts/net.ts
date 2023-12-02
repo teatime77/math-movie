@@ -14,7 +14,7 @@ export function fetchText(path: string, fnc){
         url = `${window.location.href.substring(0, k)}/${path}`;
     }
     const url2 = encodeURI(url);
-    msg(`url:${url2}`)
+    // msg(`url:${url2}`);
 
     fetch(url2, { cache : "no-store" })
     .then((res: Response) => {
@@ -28,7 +28,7 @@ export function fetchText(path: string, fnc){
         }
     })
     .then(text => {
-        msg(`text:${text}`);
+        // msg(`text:${text}`);
         fnc(text);
     })
     .catch(error => {

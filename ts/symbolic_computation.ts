@@ -1,15 +1,18 @@
 namespace MathMovie {
 
-export class CommandNode extends Node {
-    constructor(parent : HTMLDivElement, command: string){
-        super();
+export class CommandNode extends TexSeq {
+    args : TexNode[] = [];
+
+    constructor(block : Block, command: string){
+        super("");
+
+        block.nodes.push(this);
 
         const tokens = lexicalAnalysis(command);
 
         let in_math = false;
         let start_math : number;
 
-        const args : TexNode[] = [];
         for(let [idx, word] of tokens.entries()){
             if(word.text == "$"){
                 if(! in_math){
@@ -20,22 +23,12 @@ export class CommandNode extends Node {
                     const parser = new Parser(tokens.slice(start_math + 1, idx));
 
                     const node = parser.parse();
-                    args.push(node);
+                    this.args.push(node);
                 }
 
                 in_math = ! in_math;
             }
         }
-
-        if(tokens[0].text == "rep"){
-            const root = lastTexSeq.clone();
-            lastTexSeq = root;
-        
-            console.assert(args.length == 2);
-            yield* rep(parent, root, args[0], args[1]);
-        }
-
-        yield;
     }
 
     * rep(parent : HTMLDivElement, root : TexSeq, arg1 : TexNode, arg2 : TexNode){
@@ -58,7 +51,7 @@ export class CommandNode extends Node {
             while(true){
                 allNodes(root).forEach(x => x.entireText = null);
                 var str = root.texString();
-                msg(str);
+                msg(`rep ${str}`);
                 render(div, str);
                 // scrollToBottom();
 
@@ -79,7 +72,15 @@ export class CommandNode extends Node {
 }
 
 export class ReplaceNode extends CommandNode {
+    constructor(block : Block, command: string){
+        super(block, command);
 
+        const root = lastTexSeq.clone();
+        lastTexSeq = root;
+    
+        console.assert(this.args.length == 2);
+
+    }
 }
 
 }

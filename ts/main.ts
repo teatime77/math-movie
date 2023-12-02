@@ -9,7 +9,7 @@ var timerId : number;
 let svgRoot : SVGSVGElement;
 
 function onDataChanged(data_id: string){
-    console.log(`button:[${data_id}]`);
+    // msg(`button:[${data_id}]`);
 
     if(data_id == ""){
         return;
@@ -17,11 +17,11 @@ function onDataChanged(data_id: string){
 
     const path = `../data/${data_id}.md`;
 
-    msg(`click ${path}`);
+    // msg(`click ${path}`);
 
     fetchText(path, (src_text: string)=>{
 
-        msg(`fetch : ${src_text}`);
+        // msg(`fetch : ${src_text}`);
 
         iterator = generator(src_text);
 
@@ -102,7 +102,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
             if(tokens.length != 0){
                 if(tokens[0] == "block"){
                     if(block != null){
-                        console.log(`block w:${block.div.clientWidth} h:${block.div.clientHeight} ins:${block.ins}`)
+                        // msg(`block w:${block.div.clientWidth} h:${block.div.clientHeight} ins:${block.ins}`)
                     }
 
                     let ins : Block[] = [];
@@ -138,13 +138,9 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
                 lastTexSeq = root;
                 
                 const root2 = root.clone();
-                root.html = document.createElement("div");
-                root.html.style.display = "inline-block";
-                root.html.style.borderStyle= "solid";
-                root.html.style.borderWidth = "1px";
-                root.html.style.borderColor = "green";
-            
-                block.div.appendChild(root.html);
+
+                root.makeDiv(block);
+
                 for(const s of root2.genTex()){
                     render(root.html, s);
                     // scrollToBottom();
@@ -165,8 +161,8 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
             else{
             
                 if(line.startsWith("rep")){
-                    console.log(`!!!!!!!!!! ${line} !!!!!!!!!!`);
-                    new ReplaceNode(parent_td, line);
+                    const cmd = new ReplaceNode(block, line);
+                    cmd.makeDiv(block);
                 }
                 else if(line == ""){
                     continue;
@@ -174,7 +170,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
                 else{
                     new HtmlNode(block, line);
                 }
-                msg(`text ${line}`);
+                // msg(`text ${line}`);
             }
         }
     }
@@ -205,7 +201,7 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
     const total_height = Math.max(... blocks.map(x => x.top));
 
     const lane_widths = lanes.map(v => Math.max(... v.map(x => x.width)));
-    console.log(`total-height:${total_height}  lane width: ${lane_widths}`);
+    // msg(`total-height:${total_height}  lane width: ${lane_widths}`);
 
     const lane_lefts = Array(lane_widths.length).fill(0);
     let left : number = 0;
@@ -230,7 +226,10 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
 
     for(const blc of blocks){
         for(const node of blc.nodes){
-            node.hide();
+            if(! (node instanceof ReplaceNode)){
+
+                node.hide();
+            }
         }
     }
     for(const blc of blocks){
@@ -280,6 +279,12 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
             }
             else if(root instanceof HtmlNode){
                 root.show();
+            }
+            else if(root instanceof ReplaceNode){
+                msg("show Replace-Node")
+            }
+            else{
+                msg(`show ${typeof(root)}`);
             }
         }
     }

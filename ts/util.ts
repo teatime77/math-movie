@@ -9,7 +9,7 @@ const macros = {
 
 namespace MathMovie {
 export function msg(txt : string){
-    // console.log(txt);
+    console.log(txt);
 }
 
 export function element(id) : HTMLElement{

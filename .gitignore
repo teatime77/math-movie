@@ -3,3 +3,5 @@ web/data/*.txt
 web/js/main.js.map
 web/js/main.js
 web/katex
+node_modules
+docs

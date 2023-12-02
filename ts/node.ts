@@ -4,9 +4,20 @@ const oprTex = { "*":"\\cdot", "=":"=" , "!=":"\\neq" , "<":"\\lt", "<=":"\\leqq
 export abstract class Node {
     html : HTMLElement;
 
+    makeDiv(block : Block){
+        this.html = document.createElement("div");
+        this.html.style.display = "inline-block";
+        this.html.style.borderStyle= "solid";
+        this.html.style.borderWidth = "1px";
+        this.html.style.borderColor = "green";
+    
+        block.div.appendChild(this.html);
+
+    }
+
     hide(){
         if(this.html == undefined){
-            msg("");
+            msg("html is undefined");
         }
         this.html.style.visibility = "hidden";
     }
@@ -136,15 +147,6 @@ export abstract class TexNode extends Node {
     
         for(let s of this.genSubSup()){
             yield `${txt}${s}`;
-        }
-    }
-
-    replace(src_str:string, dst:TexNode){
-        const arg1 = nodeFromString(src_str);
-    
-        const eq_nodes = allNodes(this).filter(x => x.equals(arg1));
-        for(const nd of eq_nodes){
-            replace(nd, dst.clone());
         }
     }
 }
