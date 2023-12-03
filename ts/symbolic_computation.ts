@@ -30,18 +30,22 @@ export class CommandNode extends TexSeq {
             }
         }
     }
+}
+
+export class ReplaceNode extends CommandNode {
+    constructor(block : Block, command: string, last_tex_seq : TexSeq){
+        super(block, command);
+
+        this.copy(last_tex_seq);
+    
+        console.assert(this.args.length == 2);
+    }
+
 
     * rep(parent : HTMLDivElement, root : TexSeq, arg1 : TexNode, arg2 : TexNode){
         
         const eq_nodes = allNodes(root).filter(x => x.equals(arg1));
 
-        const div = document.createElement("div");
-        // div.style.display = "inline-block";
-        div.style.borderStyle= "solid";
-        div.style.borderWidth = "1px";
-        div.style.borderColor = "red";
-
-        parent.appendChild(div);
 
         for(const nd of eq_nodes){
             const target = arg2.clone();
@@ -52,7 +56,7 @@ export class CommandNode extends TexSeq {
                 allNodes(root).forEach(x => x.entireText = null);
                 var str = root.texString();
                 msg(`rep ${str}`);
-                render(div, str);
+                render(this.html, str);
                 // scrollToBottom();
 
                 if(genPart.done()){
@@ -69,18 +73,7 @@ export class CommandNode extends TexSeq {
         yield;
     }
 
-}
 
-export class ReplaceNode extends CommandNode {
-    constructor(block : Block, command: string){
-        super(block, command);
-
-        const root = lastTexSeq.clone();
-        lastTexSeq = root;
-    
-        console.assert(this.args.length == 2);
-
-    }
 }
 
 }

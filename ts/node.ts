@@ -86,19 +86,21 @@ export abstract class TexNode extends Node {
         return this.texString() == node.texString();
     }
 
+    copy(src : TexNode) : TexNode {
+        if(src.sub != null){
+            this.sub = src.sub.clone();
+        }
+
+        if(src.sup != null){
+            this.sup = src.sup.clone();
+        }
+
+        return this;
+    }
+
     invalidate(){
         for(let nd : TexNode = this; nd != null; nd = nd.parent){
             nd.entireText = null;
-        }
-    }
-
-    cloneSubSup(node: TexNode){
-        if(node.sub != null){
-            this.sub = node.sub.clone();
-        }
-
-        if(node.sup != null){
-            this.sup = node.sup.clone();
         }
     }
 
@@ -189,14 +191,18 @@ export class TexSeq extends TexNode {
         this.closing_parenthesis = closingParenthesis(this.opening_parenthesis);
     }
 
+    copy(src : TexSeq) : TexSeq {
+        super.copy(src);
+
+        this.children            = src.children.map(x => x.clone());
+        this.opening_parenthesis = src.opening_parenthesis;
+        this.closing_parenthesis = src.closing_parenthesis;
+
+        return this;
+    }
+
     clone() : TexSeq {
-        const node = new TexSeq(this.opening_parenthesis);
-
-        node.cloneSubSup(this);
-        node.children = this.children.map(x => x.clone());
-        node.closing_parenthesis = this.closing_parenthesis;
-
-        return node;
+        return new TexSeq("").copy(this);
     }
 
     parseLines(block : Block, tex_lines : string){
@@ -254,6 +260,14 @@ export abstract class TexText extends TexNode {
         super();
         this.text = text;
     }
+
+    copy(src : TexText) : TexText {
+        super.copy(src);
+        
+        this.text = src.text;
+
+        return this;
+    }
 }
 
 export class TexMacro extends TexText {
@@ -263,13 +277,16 @@ export class TexMacro extends TexText {
         super(text);
     }
 
+    copy(src : TexMacro) : TexMacro {
+        super.copy(src);
+
+        this.args = src.args.map(x => x.clone());
+
+        return this;
+    }
+
     clone() : TexMacro {
-        const node = new TexMacro(this.text);
-
-        node.cloneSubSup(this);
-        node.args = this.args.map(x => x.clone());
-
-        return node;
+        return new TexMacro(this.text).copy(this);
     }
 
     texString() : string {
@@ -312,12 +329,14 @@ export class TexLeaf extends TexText {
         super(text);
     }
 
+    copy(src : TexLeaf) : TexLeaf {
+        super.copy(src);
+
+        return this;
+    }
+
     clone() : TexLeaf {
-        const node = new TexLeaf(this.text);
-
-        node.cloneSubSup(this);
-
-        return node;
+        return new TexLeaf(this.text).copy(this);
     }
 
     texString() : string {
@@ -344,15 +363,18 @@ export class TexEnv extends TexNode {
     children : TexNode[] = [];
     end : TexMacro;
 
+    copy(src : TexEnv) : TexEnv {
+        super.copy(src);
+
+        this.begin    = src.begin.clone();
+        this.children = src.children.map(x => x.clone());
+        this.end      = src.end.clone();
+
+        return this;
+    }
+
     clone() : TexEnv {
-        const node = new TexEnv();
-
-        node.cloneSubSup(this);
-        node.begin = this.begin.clone();
-        node.children = this.children.map(x => x.clone());
-        node.end   = this.end.clone();
-
-        return node;
+        return new TexEnv().copy(this);
     }
 
     texString() : string{

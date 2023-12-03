@@ -1,8 +1,6 @@
 
 namespace MathMovie {
 
-export let lastTexSeq : TexSeq;
-
 var interval : number;
 var iterator;
 var timerId : number;
@@ -86,6 +84,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
 
     const tbl : HTMLTableElement = document.createElement("table");
     let block : Block = null;
+    let last_tex_seq : TexSeq;
 
     let tr : HTMLTableRowElement;
 
@@ -135,7 +134,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
                 const root = new TexSeq('');
                 root.parseLines(block, tex_lines);
 
-                lastTexSeq = root;
+                last_tex_seq = root;
                 
                 const root2 = root.clone();
 
@@ -161,8 +160,10 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
             else{
             
                 if(line.startsWith("rep")){
-                    const cmd = new ReplaceNode(block, line);
+                    const cmd = new ReplaceNode(block, line, last_tex_seq);
                     cmd.makeDiv(block);
+
+                    last_tex_seq = cmd;
                 }
                 else if(line == ""){
                     continue;
