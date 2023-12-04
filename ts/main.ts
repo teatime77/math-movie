@@ -53,8 +53,8 @@ function timerFnc(){
 function* generator(src_text: string){
     const lines = src_text.split('\n');
 
-    const parent = document.getElementById("math-div") as HTMLDivElement;
-    parent.innerHTML = "";
+    const parent_div = document.getElementById("math-div") as HTMLDivElement;
+    parent_div.innerHTML = "";
 
     mathView.clear();
 
@@ -64,8 +64,10 @@ function* generator(src_text: string){
     else{
     }
 
-    let [blocks , tbl] = makeBlockTree(parent, lines);
-    yield* showBlockTree(parent, blocks, tbl);
+    let [blocks , tbl] = makeBlockTree(parent_div, lines);
+    calcBlockPos(blocks);
+    makeDiagDiv(parent_div, blocks);
+    yield* showBlockTree(parent_div, blocks, tbl);
 }
 
 function makeTD(tr : HTMLTableRowElement){
@@ -136,11 +138,9 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
 
                 last_tex_seq = root;
                 
-                const root2 = root.clone();
-
                 root.makeDiv(block);
 
-                for(const s of root2.genTex()){
+                for(const s of root.genTex()){
                     render(root.html, s);
                     // scrollToBottom();
                 }
@@ -162,6 +162,9 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
                 if(line.startsWith("rep")){
                     const cmd = new ReplaceNode(block, line, last_tex_seq);
                     cmd.makeDiv(block);
+                    cmd.rep();
+                    render(cmd.html, cmd.texString());
+                    addHR(block.div);
 
                     last_tex_seq = cmd;
                 }
@@ -186,8 +189,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
     return [blocks, tbl];
 }
 
-
-function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTMLTableElement){
+function calcBlockPos(blocks : Block[]){
 
     const roots = blocks.filter(x => x.outs.length == 0);
     for(const blc of roots){
@@ -199,12 +201,9 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
         blc.calcLane(0);
     }
 
-    const total_height = Math.max(... blocks.map(x => x.top));
-
     const lane_widths = lanes.map(v => Math.max(... v.map(x => x.width)));
     // msg(`total-height:${total_height}  lane width: ${lane_widths}`);
 
-    const lane_lefts = Array(lane_widths.length).fill(0);
     let left : number = 0;
     for(const [idx, width] of lane_widths.entries()){
         if(0 < idx){
@@ -215,6 +214,10 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
             blc.left = left;
         }
     }
+}
+
+function makeDiagDiv(parent_div : HTMLDivElement, blocks : Block[]){
+    const total_height = Math.max(... blocks.map(x => x.top));
 
     const diagDiv = document.createElement("div");
     parent_div.appendChild(diagDiv);
@@ -227,12 +230,10 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
 
     for(const blc of blocks){
         for(const node of blc.nodes){
-            if(! (node instanceof ReplaceNode)){
-
-                node.hide();
-            }
+            node.hide();
         }
     }
+
     for(const blc of blocks){
         const top = blc.top;
 
@@ -243,6 +244,9 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
         blc.div.style.top  = `${total_height - top}px`;
         diagDiv.appendChild(blc.div);
     }
+}
+
+function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTMLTableElement){
 
     for(const blc of blocks){
 
@@ -271,8 +275,7 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
                 root.html.innerHTML = "";
                 root.show();
 
-                const root2 = root.clone();
-                for(const s of root2.genTex()){
+                for(const s of root.genTex()){
                     render(root.html, s);
                     // scrollToBottom();
                     yield;

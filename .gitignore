@@ -5,3 +5,9 @@ web/js/main.js
 web/katex
 node_modules
 docs
+memo.md
+package-lock.json
+package.json
+web/html/chemistry.html
+web/html/svg.html
+web/html/css/styles.css

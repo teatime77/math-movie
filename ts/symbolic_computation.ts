@@ -41,20 +41,28 @@ export class ReplaceNode extends CommandNode {
         console.assert(this.args.length == 2);
     }
 
+    rep(){
+        const eq_nodes = allNodes(this).filter(x => x.equals(this.args[0]));
 
-    * rep(parent : HTMLDivElement, root : TexSeq, arg1 : TexNode, arg2 : TexNode){
+        for(const nd of eq_nodes){
+            const target = this.args[1].clone();
+            replace(nd, target);
+        }
+    }
+
+    * genRep(){
         
-        const eq_nodes = allNodes(root).filter(x => x.equals(arg1));
+        const eq_nodes = allNodes(this).filter(x => x.equals(this.args[0]));
 
 
         for(const nd of eq_nodes){
-            const target = arg2.clone();
+            const target = this.args[1].clone();
             replace(nd, target);
 
             genPart = new PartialTex(target);
             while(true){
-                allNodes(root).forEach(x => x.entireText = null);
-                var str = root.texString();
+                allNodes(this).forEach(x => x.entireText = null);
+                var str = this.texString();
                 msg(`rep ${str}`);
                 render(this.html, str);
                 // scrollToBottom();
@@ -69,7 +77,6 @@ export class ReplaceNode extends CommandNode {
             targetNode = null;
         }
 
-        addHR(parent);
         yield;
     }
 
