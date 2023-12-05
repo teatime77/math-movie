@@ -31,13 +31,14 @@ function onDataChanged(data_id: string){
 
 export function bodyOnLoad(){
     initSVG();
-    
+    initSpeech();
+
     const data_select = document.getElementById("data-select") as HTMLSelectElement;
 
     data_select.addEventListener("change", (ev:Event)=>{
         onDataChanged(data_select.value);
     });
-}    
+}
 
 function timerFnc(){
     // speech.speak(sss);
@@ -140,10 +141,8 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
                 
                 root.makeDiv(block);
 
-                for(const s of root.genTex()){
-                    render(root.html, s);
-                    // scrollToBottom();
-                }
+                render(root.html, root.texString());
+                // scrollToBottom();
 
                 addHR(block.div);
             }
