@@ -1,11 +1,13 @@
 namespace MathMovie {
 
 export class CommandNode extends TexSeq {
+    prevTexSeq : TexSeq;
     args : TexNode[] = [];
 
-    constructor(block : Block, command: string){
+    constructor(block : Block, command: string, prev_tex_seq : TexSeq){
         super("");
 
+        this.prevTexSeq = prev_tex_seq.clone();
         block.nodes.push(this);
 
         const tokens = lexicalAnalysis(command);
@@ -33,10 +35,10 @@ export class CommandNode extends TexSeq {
 }
 
 export class ReplaceNode extends CommandNode {
-    constructor(block : Block, command: string, last_tex_seq : TexSeq){
-        super(block, command);
+    constructor(block : Block, command: string, prev_tex_seq : TexSeq){
+        super(block, command, prev_tex_seq);
 
-        this.copy(last_tex_seq);
+        this.copy(prev_tex_seq);
     
         console.assert(this.args.length == 2);
     }
@@ -54,7 +56,6 @@ export class ReplaceNode extends CommandNode {
         
         const eq_nodes = allNodes(this).filter(x => x.equals(this.args[0]));
 
-
         for(const nd of eq_nodes){
             const target = this.args[1].clone();
             replace(nd, target);
@@ -63,7 +64,6 @@ export class ReplaceNode extends CommandNode {
             while(true){
                 allNodes(this).forEach(x => x.entireText = null);
                 var str = this.texString();
-                msg(`rep ${str}`);
                 render(this.html, str);
                 // scrollToBottom();
 

@@ -86,7 +86,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
 
     const tbl : HTMLTableElement = document.createElement("table");
     let block : Block = null;
-    let last_tex_seq : TexSeq;
+    let prev_tex_seq : TexSeq;
 
     let tr : HTMLTableRowElement;
 
@@ -136,7 +136,7 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
                 const root = new TexSeq('');
                 root.parseLines(block, tex_lines);
 
-                last_tex_seq = root;
+                prev_tex_seq = root;
                 
                 root.makeDiv(block);
 
@@ -160,13 +160,13 @@ export function makeBlockTree(parent_div : HTMLDivElement, lines : string[]) : [
             else{
             
                 if(line.startsWith("rep")){
-                    const cmd = new ReplaceNode(block, line, last_tex_seq);
+                    const cmd = new ReplaceNode(block, line, prev_tex_seq);
                     cmd.makeDiv(block);
                     cmd.rep();
                     render(cmd.html, cmd.texString());
                     addHR(block.div);
 
-                    last_tex_seq = cmd;
+                    prev_tex_seq = cmd;
                 }
                 else if(line == ""){
                     continue;
@@ -275,17 +275,22 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
                 root.html.innerHTML = "";
                 root.show();
 
-                for(const s of root.genTex()){
-                    render(root.html, s);
-                    // scrollToBottom();
-                    yield;
+                if(root instanceof ReplaceNode){
+                    root.copy(root.prevTexSeq);
+        
+                    yield* root.genRep();
+                }
+                else{
+
+                    for(const s of root.genTex()){
+                        render(root.html, s);
+                        // scrollToBottom();
+                        yield;
+                    }
                 }
             }
             else if(root instanceof HtmlNode){
                 root.show();
-            }
-            else if(root instanceof ReplaceNode){
-                msg("show Replace-Node")
             }
             else{
                 msg(`show ${typeof(root)}`);
