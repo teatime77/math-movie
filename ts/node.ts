@@ -1,5 +1,6 @@
 namespace MathMovie {
 const oprTex = { "*":"\\cdot", "=":"=" , "!=":"\\neq" , "<":"\\lt", "<=":"\\leqq", ">":"\\gt" , ">=":"\\geqq" };
+export const replaceMarker = "#$%&@+*";
 
 export abstract class Node {
     html : HTMLElement;
@@ -155,31 +156,6 @@ export abstract class TexNode extends Node {
 
 export let targetNode : TexNode = null;
 
-export class PartialTex {
-    genNode : IterableIterator<string> = null;
-    genNext : IteratorResult<string> = null;
-    genValue : string = null;
-
-    constructor(nd : TexNode){
-        targetNode = nd;
-        this.genNode = nd.genTex();
-    }
-
-    partTex() : string {
-        this.genNext = this.genNode.next();
-        if(! this.genNext.done){
-            this.genValue = this.genNext.value;
-        }
-        return `\\textcolor{red}{${this.genValue}}`;
-    }
-
-    done() : boolean {
-        return this.genNext == null || this.genNext.done
-    }
-}
-
-export let genPart : PartialTex;
-
 export class TexSeq extends TexNode {
     children : TexNode[] = [];
     opening_parenthesis : string;
@@ -226,7 +202,7 @@ export class TexSeq extends TexNode {
     texString() : string {
         if(this == targetNode){
 
-            return genPart.partTex();
+            return replaceMarker;
         }
 
         if(this.entireText == null){
@@ -292,7 +268,7 @@ export class TexMacro extends TexText {
     texString() : string {
         if(this == targetNode){
 
-            return genPart.partTex();
+            return replaceMarker;
         }
 
         if(this.entireText == null){
@@ -342,7 +318,7 @@ export class TexLeaf extends TexText {
     texString() : string {
         if(this == targetNode){
 
-            return genPart.partTex();
+            return replaceMarker;
         }
 
         if(this.entireText == null){
@@ -380,7 +356,7 @@ export class TexEnv extends TexNode {
     texString() : string{
         if(this == targetNode){
 
-            return genPart.partTex();
+            return replaceMarker;
         }
 
         if(this.entireText == null){

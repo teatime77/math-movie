@@ -6,9 +6,8 @@ const voiceName = "Microsoft Ana Online (Natural) - English (United States)"; //
 let prevCharIndex = 0;
 
 export function speakTest(){
-    const area = document.getElementById("text-data") as HTMLTextAreaElement;
-    // speak("大阪ベイエリア・咲洲にあるATCでは店舗・オフィス・物流センター・イベントなどあらゆるサービスの現場が揃っています。");
-    speak(area.value.trim());
+    const text_area = document.getElementById("text-data") as HTMLTextAreaElement;
+    speak(text_area.value.trim());
 }
 
 function setVoice(){

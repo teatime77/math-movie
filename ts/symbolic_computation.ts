@@ -52,35 +52,31 @@ export class ReplaceNode extends CommandNode {
         }
     }
 
+
     * genRep(){
-        
         const eq_nodes = allNodes(this).filter(x => x.equals(this.args[0]));
 
         for(const nd of eq_nodes){
             const target = this.args[1].clone();
             replace(nd, target);
 
-            genPart = new PartialTex(target);
-            while(true){
-                allNodes(this).forEach(x => x.entireText = null);
-                var str = this.texString();
-                render(this.html, str);
-                // scrollToBottom();
+            allNodes(this).forEach(x => x.entireText = null);
 
-                if(genPart.done()){
-                    break;
-                }
+            targetNode = target;
+
+            let str = this.texString();
+
+            for(const s of target.genTex()){
+                const target_str = `\\textcolor{red}{${s}}`;
+                const render_str = str.replace(replaceMarker, target_str)
+                render(this.html, render_str);
+                
                 yield;
             }
 
-            genPart = null;
             targetNode = null;
         }
-
-        yield;
     }
-
-
 }
 
 }
