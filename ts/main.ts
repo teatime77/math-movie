@@ -281,6 +281,10 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
                 }
                 else{
 
+                    const phrases : [TexNode, string[]][] = [];
+                    root.getSpeech(phrases);
+                    speakNode(phrases);
+
                     for(const s of root.genTex()){
                         render(root.html, s);
                         // scrollToBottom();

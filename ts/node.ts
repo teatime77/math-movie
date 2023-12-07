@@ -139,6 +139,7 @@ export abstract class TexNode extends Node {
     abstract clone() : TexNode;
     abstract texString() : string;
     abstract genTexSub() : IterableIterator<string>;
+    abstract getSpeech(phrases : [TexNode, string[]][]) : void;
 
     * genTex() : IterableIterator<string>{
         let txt : string;
@@ -227,6 +228,10 @@ export class TexSeq extends TexNode {
 
         yield `${this.opening_parenthesis} ${arg_strs.join(" ")} ${this.closing_parenthesis}`;
     }
+
+    getSpeech(phrases : [TexNode, string[]][]) : void {
+        this.children.forEach(x => x.getSpeech(phrases));
+    }
 }
 
 export abstract class TexText extends TexNode {
@@ -288,6 +293,11 @@ export class TexMacro extends TexText {
     *genTexSub() : IterableIterator<string> {
         const arg_strs = this.args.map(x => x.initString());
 
+        msg(`gen tex mac ${this.text} ${getSpeakingNode()}`)
+        while(this == speakingNode){
+            yield `${this.text}${arg_strs.join("")}`;
+        }
+
         for(let [idx, blc] of this.args.entries()){
             for(const s of blc.genTex()){
                 arg_strs[idx] = s;
@@ -298,6 +308,12 @@ export class TexMacro extends TexText {
 
         yield `${this.text}${arg_strs.join("")}`;
     }    
+
+
+    getSpeech(phrases : [TexNode, string[]][]) : void {
+        phrases.push([this, [pronunciation(this.text)]]);
+        this.args.forEach(x => x.getSpeech(phrases));
+    }
 }
 
 export class TexLeaf extends TexText {
@@ -330,8 +346,17 @@ export class TexLeaf extends TexText {
     }
 
     *genTexSub() : IterableIterator<string> {
+        msg(`gen tex leaf ${this.text} ${getSpeakingNode()}`)
         yield this.text;
+        while(this == speakingNode){
+            yield this.text;
+        }
     }
+
+    getSpeech(phrases : [TexNode, string[]][]) : void {
+        phrases.push([this, [pronunciation(this.text)]]);        
+    }
+
 }
 
 export class TexEnv extends TexNode {
@@ -380,13 +405,23 @@ export class TexEnv extends TexNode {
         for(var i = 0; i < this.children.length; i++){
             for(const seq of this.children[i].genTex()){
                 children_str[i] = seq;
-    
+
                 yield `${begin_str}\n ${children_str.join(" ")} \n${end_str}`;
-            }       
+            }
+
+            while(this.children[i] == speakingNode){
+                yield `${begin_str}\n ${children_str.join(" ")} \n${end_str}`;
+            }
         }
         
         yield `${begin_str}\n ${children_str.join(" ")} \n${end_str}`;
     }
+
+
+    getSpeech(phrases : [TexNode, string[]][]) : void {
+        this.children.forEach(x => x.getSpeech(phrases));
+    }
+
 }
 
 export function allNodes(node : TexNode, nodes : TexNode[] = []) : TexNode[] {
