@@ -139,7 +139,7 @@ export abstract class TexNode extends Node {
     abstract clone() : TexNode;
     abstract texString() : string;
     abstract genTexSub() : IterableIterator<string>;
-    abstract getSpeech(phrases : [TexNode, string[]][]) : void;
+    abstract getSpeech(phrases : Phrase[]) : void;
 
     * genTex() : IterableIterator<string>{
         let txt : string;
@@ -229,7 +229,7 @@ export class TexSeq extends TexNode {
         yield `${this.opening_parenthesis} ${arg_strs.join(" ")} ${this.closing_parenthesis}`;
     }
 
-    getSpeech(phrases : [TexNode, string[]][]) : void {
+    getSpeech(phrases : Phrase[]) : void {
         this.children.forEach(x => x.getSpeech(phrases));
     }
 }
@@ -293,7 +293,6 @@ export class TexMacro extends TexText {
     *genTexSub() : IterableIterator<string> {
         const arg_strs = this.args.map(x => x.initString());
 
-        msg(`gen tex mac ${this.text} ${getSpeakingNode()}`)
         while(this == speakingNode){
             yield `${this.text}${arg_strs.join("")}`;
         }
@@ -310,8 +309,8 @@ export class TexMacro extends TexText {
     }    
 
 
-    getSpeech(phrases : [TexNode, string[]][]) : void {
-        phrases.push([this, [pronunciation(this.text)]]);
+    getSpeech(phrases : Phrase[]) : void {
+        phrases.push( new Phrase(this, pronunciation(this.text)) );
         this.args.forEach(x => x.getSpeech(phrases));
     }
 }
@@ -346,17 +345,18 @@ export class TexLeaf extends TexText {
     }
 
     *genTexSub() : IterableIterator<string> {
-        msg(`gen tex leaf ${this.text} ${getSpeakingNode()}`)
         yield this.text;
         while(this == speakingNode){
             yield this.text;
         }
     }
 
-    getSpeech(phrases : [TexNode, string[]][]) : void {
-        phrases.push([this, [pronunciation(this.text)]]);        
-    }
+    getSpeech(phrases : Phrase[]) : void {
+        if(! [ "\\\\", "\\" ].includes(this.text)){
 
+            phrases.push( new Phrase(this, pronunciation(this.text)) );
+        }
+    }
 }
 
 export class TexEnv extends TexNode {
@@ -418,7 +418,7 @@ export class TexEnv extends TexNode {
     }
 
 
-    getSpeech(phrases : [TexNode, string[]][]) : void {
+    getSpeech(phrases : Phrase[]) : void {
         this.children.forEach(x => x.getSpeech(phrases));
     }
 

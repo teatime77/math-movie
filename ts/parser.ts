@@ -129,6 +129,20 @@ export class Token{
     }
 }
 
+class Term {
+}
+
+class App extends Term{
+    opr : string;
+    args: Term[];
+
+    constructor(opr: string, args: Term[]){
+        super();
+        this.opr    = opr;
+        this.args   = args.slice();
+    }
+}
+
 export function lexicalAnalysis(text : string) : Token[] {
     const tokens : Token[] = [];
 
@@ -378,6 +392,76 @@ export class Parser {
         return this.currentToken.text == '[' || this.currentToken.text == '{';
     }
 
+
+    MultiplicativeExpression(){
+        let trm1 = this.PrimaryExpression();
+        while(this.tokenText == "*" || this.tokenText == "/"){
+            let app = new App(this.tokenText, [trm1]);
+            this.readNextToken();
+
+            while(true){
+                let trm2 = this.PrimaryExpression();
+                app.args.push(trm2);
+                
+                if(this.tokenText == app.opr){
+                    this.readNextToken();
+                }
+                else{
+                    trm1 = app;
+                    break;
+                }
+            }
+        }
+    
+        return trm1;
+    }
+    
+    AdditiveExpression(){
+        let trm1 = this.MultiplicativeExpression();
+        while(this.tokenText == "+" || this.tokenText == "-"){
+            let app = new App(this.tokenText, [trm1]);
+            this.readNextToken();
+
+            while(true){
+                let trm2 = this.MultiplicativeExpression();
+                app.args.push(trm2);
+                
+                if(this.tokenText == app.opr){
+                    this.readNextToken();
+                }
+                else{
+                    trm1 = app;
+                    break;
+                }
+            }
+        }
+
+        return trm1;
+    }
+
+    Expression(){
+        let trm = this.AdditiveExpression();
+        if(this.tokenText != ","){
+
+            return trm;
+        }
+
+        let app = new App("[]", [trm]);
+        
+        while(this.tokenText == ","){
+            this.readNextToken();
+
+            let trm2 = this.AdditiveExpression();
+            app.args.push(trm2);
+        }
+
+        return app;
+    }
+
+    get tokenText() : string {
+        return this.currentToken.text;
+    }
+        
     parse() : TexNode {
         var node : TexNode;
 

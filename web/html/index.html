@@ -63,9 +63,12 @@
 <br/>
 
 間隔 : <input type="number" value="0" id="interval" />
+音声合成 : <input type="checkbox" id="speech-on" />
+速度 : <input type="number" min="0.1" max="100" step="0.1" value="1" id="speech-rate" />
 <select id="voice-lang-select" ></select>
 <select id="voice-name-select" ></select>
 <button onclick="MathMovie.speakTest()" >Speak</button>
+<button onclick="MathMovie.stop()" >Stop</button>
 <br/>
 <textarea id="text-data" cols="160" rows="2">
 In theoretical physics, quantum field theory (QFT) is a theoretical framework that combines classical field theory, special relativity, and quantum mechanics.  
@@ -81,17 +84,28 @@ $$
   <option value=""></option>
   <option value="derivative/rule1">微分公式１</option>
   <option value="derivative/rule2">微分公式２</option>
-  <option value="derivative/lap">ラプラシアン</option>
 
   <option value="diff-eq/sep-var-1" >変数分離形</option>
   <option value="diff-eq/sep-var-2">変数分離形 ( dy/dx = f(a x + b y + c) )</option>
   <option value="diff-eq/sep-var-3">同次形</option>
   <option value="diff-eq/1-linear">1階線形微分方程式</option>
   <option value="diff-eq/bernoulli">ベルヌーイ形 微分方程式</option>
-  <option value="qm1">qm1</option>
-  <option value="qm2">qm2</option>
   <option value="test">test</option>
-  <option value="量子力学/シュレディンガー方程式">シュレディンガー方程式</option>
+  <optgroup label="量子力学">
+    <option value="qm1">qm1</option>
+    <option value="qm2">qm2</option>
+  </optgroup>
+  <optgroup label="シュレディンガー方程式">
+    <option value="量子力学/シュレディンガー方程式/1">1</option>
+    <option value="量子力学/シュレディンガー方程式/2">2</option>
+  </optgroup>  
+  <optgroup label="ラプラシアン">
+    <option value="ラプラシアン/1">1</option>
+    <option value="ラプラシアン/2">2</option>
+    <option value="ラプラシアン/3">3</option>
+    <option value="ラプラシアン/4">4</option>
+    <option value="ラプラシアン/5">5</option>
+  </optgroup>
 
   
   <option value="場の量子論/ディラック方程式/アイデア">場の量子論/ディラック方程式/アイデア</option>

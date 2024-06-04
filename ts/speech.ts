@@ -4,14 +4,21 @@ let uttrVoice : SpeechSynthesisVoice|null = null;
 const voiceLang = "en-US";              // "ja-JP"
 const voiceName = "Microsoft Ana Online (Natural) - English (United States)"; // "Google US English";    // "Google 日本語";
 let prevCharIndex = 0;
-let Phrases : [TexNode, string[]][] = [];
+let Phrases : Phrase[] = [];
 let phraseIdx : number = 0;
 let wordIdx : number = 0;
+let speechRrate : HTMLInputElement;
 
 export let speakingNode : Node | null = null;
 
-export function getSpeakingNode() : string {
-    return speakingNode == null ? "" : Phrases[phraseIdx][1][0];
+export class Phrase {
+    texNode : TexNode;
+    words   : string[];
+
+    constructor(tex_node : TexNode, words : string[]){
+        this.texNode = tex_node;
+        this.words   = words;
+    }
 }
 
 export function speakTest(){
@@ -19,19 +26,19 @@ export function speakTest(){
     speak(text_area.value.trim());
 }
 
-export function pronunciation(word: string){
+export function pronunciation(word: string) : string[]{
     if(word[0] == '\\'){
-        const tbl : {[key:string]:string} = {
-            "dif" : "diff",
-            "Delta" : "delta",
-            "lim" : "limit",
-            "frac" : "fraction",
-            "sqrt" : "square root",
-            "ne" : "not equals",
-            "lt" : "is less than",
-            "gt" : "is greater than",
-            "le" : "is less than or equals",
-            "ge" : "is greater than or equals",
+        const tbl : {[key:string]:string[]} = {
+            "dif" : ["diff"],
+            "Delta" : ["delta"],
+            "lim" : ["limit"],
+            "frac" : ["fraction"],
+            "sqrt" : "square root".split(" "),
+            "ne" : "not equals".split(" "),
+            "lt" : "is less than".split(" "),
+            "gt" : "is greater than".split(" "),
+            "le" : "is less than or equals".split(" "),
+            "ge" : "is greater than or equals".split(" "),
         };
 
         const name = word.substring(1);
@@ -39,11 +46,11 @@ export function pronunciation(word: string){
             return tbl[name];
         }
         else{
-            return name;
+            return [name];
         }
     }
     
-    return word;
+    return [word];
 }
 
 function setVoice(){
@@ -51,7 +58,7 @@ function setVoice(){
     const voice_name_select = document.getElementById("voice-name-select") as HTMLSelectElement;
 
     for(const voice of speechSynthesis.getVoices()){
-        if(voice.lang == voiceLang){
+        if(voice.lang == voiceLang || voice.lang == "ja-JP"){
 
             msg(`${voice.lang} [${voice.name}] ${voice.default} ${voice.localService} ${voice.voiceURI}`);
 
@@ -83,6 +90,8 @@ function setVoice(){
 }
 
 export function initSpeech(){
+    speechRrate = document.getElementById("speech-rate") as HTMLInputElement;
+
     if ('speechSynthesis' in window) {
         msg("このブラウザは音声合成に対応しています。🎉");
     }
@@ -113,20 +122,26 @@ export function speak(text : string){
     uttr.onboundary = onSpeechBoundary;
 
     uttr.onmark = onMark;
+
+    uttr.rate = parseFloat(speechRrate.value);
         
     speechSynthesis.speak(uttr);
 }
 
-export function speakNode(phrases : [TexNode, string[]][]){
+export function cancelSpeech(){
+    speechSynthesis.cancel();
+}
+
+export function speakNode(phrases : Phrase[]){
     console.assert(phrases.length != 0);
 
-    const text = phrases.map(x => x[1].join(" ")).join(" ");
+    const text = phrases.map(x => x.words.join(" ")).join(" ");
     msg(`speech ${text}`);
 
     Phrases = phrases.slice();
     phraseIdx = 0;
     wordIdx   = 0;
-    speakingNode = Phrases[phraseIdx][0];
+    speakingNode = Phrases[phraseIdx].texNode;
 
     speak(text);
 }
@@ -143,25 +158,25 @@ function onSpeechBoundary(ev: SpeechSynthesisEvent){
         msg(`speech bdr: idx:${ev.charIndex} name:${ev.name} type:${ev.type} text:[${text}]`);
 
         if(phraseIdx < Phrases.length){
-            const words : string[] = Phrases[phraseIdx][1];
-            if(words[wordIdx] != text){
+            const phrase = Phrases[phraseIdx];
+            if(phrase.words[wordIdx] != text){
     
-                msg(`bdr [${words[wordIdx]}] <> [${text}]`)
+                msg(`bdr [${phrase.words[wordIdx]}] <> [${text}]`)
             }
-            console.assert(words[wordIdx] == text);
+            console.assert(phrase.words[wordIdx] == text);
     
             wordIdx++;
-            if(wordIdx < words.length){
-                msg(`next word ${words[wordIdx]}`);
+            if(wordIdx < phrase.words.length){
+                msg(`next word ${phrase.words[wordIdx]}`);
             }
             else{
                 phraseIdx++;
                 wordIdx = 0;
                 if(phraseIdx < Phrases.length){
     
-                    speakingNode = Phrases[phraseIdx][0];
+                    speakingNode = Phrases[phraseIdx].texNode;
     
-                    msg(`next phrase ${Phrases[phraseIdx][1][0]}`);
+                    msg(`next phrase :${Phrases[phraseIdx].words.join(" ")}`);
                 }
                 else{
     
@@ -170,13 +185,13 @@ function onSpeechBoundary(ev: SpeechSynthesisEvent){
                 }
             }
         }
-
     }
     prevCharIndex = ev.charIndex;
 }
 
 function onSpeechEnd(ev: SpeechSynthesisEvent){
     msg(`speech end: idx:${ev.charIndex} name:${ev.name} type:${ev.type} text:${ev.utterance.text.substring(prevCharIndex, ev.charIndex)}`);
+    speakingNode = null;
 }
 
 function onMark(ev: SpeechSynthesisEvent){

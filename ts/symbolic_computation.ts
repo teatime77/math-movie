@@ -70,7 +70,10 @@ export class ReplaceNode extends CommandNode {
                 const target_str = `\\textcolor{red}{${s}}`;
                 const render_str = str.replace(replaceMarker, target_str)
                 render(this.html, render_str);
-                
+            }
+
+            const msec = performance.now();
+            while(performance.now() - msec < 1000){
                 yield;
             }
 

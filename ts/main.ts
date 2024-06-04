@@ -5,6 +5,7 @@ var interval : number;
 var iterator;
 var timerId : number;
 let svgRoot : SVGSVGElement;
+let stopFlag :boolean = false;
 
 function onDataChanged(data_id: string){
     // msg(`button:[${data_id}]`);
@@ -28,6 +29,10 @@ function onDataChanged(data_id: string){
     });
 }
 
+export function stop(){
+    stopFlag = true;
+    cancelSpeech();
+}
 
 export function bodyOnLoad(){
     initSVG();
@@ -246,8 +251,12 @@ function makeDiagDiv(parent_div : HTMLDivElement, blocks : Block[]){
 }
 
 function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTMLTableElement){
-
+    stopFlag = false;
+    
     for(const blc of blocks){
+        if(stopFlag){
+            break;
+        }
 
         for(const in_blc of blc.ins){
             const rc = mathView.svg.getBoundingClientRect();
@@ -265,10 +274,14 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
             drawCircle(x1, y1, 5, "red");
             drawCircle(x2, y2, 5, "blue");
 
-            console.log(`id:${in_blc.blockId}=>${blc.blockId} (${x1},${y1}) => (${x2},${y2}`)
+            // console.log(`id:${in_blc.blockId}=>${blc.blockId} (${x1},${y1}) => (${x2},${y2}`);
         }
 
         for(const root of blc.nodes){
+            if(stopFlag){
+                break;
+            }
+    
             if(root instanceof TexSeq){
 
                 root.html.innerHTML = "";
@@ -281,9 +294,13 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
                 }
                 else{
 
-                    const phrases : [TexNode, string[]][] = [];
-                    root.getSpeech(phrases);
-                    speakNode(phrases);
+                    const speech_on = document.getElementById("speech-on") as HTMLInputElement;
+                    if(speech_on.checked){
+
+                        const phrases : Phrase[] = [];
+                        root.getSpeech(phrases);
+                        speakNode(phrases);
+                    }
 
                     for(const s of root.genTex()){
                         render(root.html, s);
@@ -300,6 +317,8 @@ function* showBlockTree(parent_div : HTMLDivElement, blocks : Block[], tbl : HTM
             }
         }
     }
+
+    speakingNode = null;
 
     parent_div.removeChild(tbl);
 
